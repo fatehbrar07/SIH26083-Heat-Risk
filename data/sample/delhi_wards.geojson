@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "name": "Delhi_Sample_Wards_Risk_Layer",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W01",
+        "ward_name": "Seelampur (Shahdara North)",
+        "zone": "Shahdara North",
+        "district": "North East Delhi",
+        "area_sqkm": 3.2,
+        "centroid_lat": 28.6692,
+        "centroid_lon": 77.2685
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.258, 28.660], [77.278, 28.660], [77.278, 28.678], [77.258, 28.678], [77.258, 28.660]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W02",
+        "ward_name": "Chandni Chowk",
+        "zone": "City-SP Zone",
+        "district": "Central Delhi",
+        "area_sqkm": 2.4,
+        "centroid_lat": 28.6506,
+        "centroid_lon": 77.2303
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.220, 28.642], [77.240, 28.642], [77.240, 28.658], [77.220, 28.658], [77.220, 28.642]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W03",
+        "ward_name": "Rohini Sector 3",
+        "zone": "Rohini",
+        "district": "North West Delhi",
+        "area_sqkm": 5.8,
+        "centroid_lat": 28.7041,
+        "centroid_lon": 77.1025
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.085, 28.692], [77.120, 28.692], [77.120, 28.716], [77.085, 28.716], [77.085, 28.692]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W04",
+        "ward_name": "Karol Bagh",
+        "zone": "Karol Bagh",
+        "district": "Central Delhi",
+        "area_sqkm": 4.1,
+        "centroid_lat": 28.6522,
+        "centroid_lon": 77.1906
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.175, 28.640], [77.205, 28.640], [77.205, 28.665], [77.175, 28.665], [77.175, 28.640]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W05",
+        "ward_name": "Chanakyapuri (Lutyens/Diplomatic)",
+        "zone": "New Delhi (NDMC)",
+        "district": "New Delhi",
+        "area_sqkm": 8.5,
+        "centroid_lat": 28.5983,
+        "centroid_lon": 77.1850
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.165, 28.580], [77.210, 28.580], [77.210, 28.615], [77.165, 28.615], [77.165, 28.580]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W06",
+        "ward_name": "Okhla Industrial Area",
+        "zone": "Central Zone",
+        "district": "South East Delhi",
+        "area_sqkm": 6.2,
+        "centroid_lat": 28.5300,
+        "centroid_lon": 77.2710
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.250, 28.515], [77.290, 28.515], [77.290, 28.545], [77.250, 28.545], [77.250, 28.515]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W07",
+        "ward_name": "Najafgarh Rural/Peri-urban",
+        "zone": "Najafgarh",
+        "district": "South West Delhi",
+        "area_sqkm": 14.5,
+        "centroid_lat": 28.6128,
+        "centroid_lon": 76.9850
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.950, 28.590], [77.020, 28.590], [77.020, 28.635], [76.950, 28.635], [76.950, 28.590]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "DEL-W08",
+        "ward_name": "Narela Agro-Industrial",
+        "zone": "Narela",
+        "district": "North Delhi",
+        "area_sqkm": 12.0,
+        "centroid_lat": 28.8527,
+        "centroid_lon": 77.0933
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.065, 28.830], [77.120, 28.830], [77.120, 28.875], [77.065, 28.875], [77.065, 28.830]]]
+      }
+    }
+  ]
+}

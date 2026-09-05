@@ -1,0 +1,79 @@
+# Physiological Thermal Stress & Public Health Alert Thresholds
+
+# 1. UTCI Thermal Stress Categories (Universal Thermal Climate Index, °C)
+# Source: UTCI Commission & WMO (Błażejczyk et al., 2013)
+utci:
+  extreme_cold_stress: [-999.0, -40.0]
+  very_strong_cold_stress: [-40.0, -27.0]
+  strong_cold_stress: [-27.0, -13.0]
+  moderate_cold_stress: [-13.0, 0.0]
+  slight_cold_stress: [0.0, 9.0]
+  no_thermal_stress: [9.0, 26.0]
+  moderate_heat_stress: [26.0, 32.0]
+  strong_heat_stress: [32.0, 38.0]
+  very_strong_heat_stress: [38.0, 46.0]
+  extreme_heat_stress: [46.0, 999.0]
+
+# 2. WBGT Occupational Categories (Wet-Bulb Globe Temperature, °C)
+# Source: ISO 7243:2017 & NIOSH Criteria for Occupational Exposure to Heat (2016)
+wbgt:
+  normal:
+    threshold_max: 25.9
+    work_rest_ratio: "Continuous work (100%)"
+    water_intake_liters_hr: 0.5
+  caution:
+    threshold_min: 26.0
+    threshold_max: 27.9
+    work_rest_ratio: "75% work / 25% rest per hour"
+    water_intake_liters_hr: 0.75
+  warning:
+    threshold_min: 28.0
+    threshold_max: 29.9
+    work_rest_ratio: "50% work / 50% rest per hour"
+    water_intake_liters_hr: 1.0
+  danger:
+    threshold_min: 30.0
+    threshold_max: 31.9
+    work_rest_ratio: "25% work / 75% rest per hour"
+    water_intake_liters_hr: 1.0
+  extreme_danger:
+    threshold_min: 32.0
+    threshold_max: 999.0
+    work_rest_ratio: "Suspend unconditioned outdoor physical labor"
+    water_intake_liters_hr: 1.25
+
+# 3. NOAA / NWS Heat Index Categories (°C)
+# Source: National Oceanic and Atmospheric Administration (NOAA NWS)
+heat_index:
+  caution: [27.0, 32.0]
+  extreme_caution: [32.0, 39.0]
+  danger: [39.0, 51.0]
+  extreme_danger: [51.0, 999.0]
+
+# 4. Final Composite Human Heat-Health Risk Bands (0-100 normalized score)
+# Aligned with NDMA National Guidelines for Preparation of Action Plan (2024) & NCDC
+risk_bands:
+  low:
+    min_score: 0.0
+    max_score: 29.9
+    color: "#22C55E" # Green
+    label: "Low Risk (Normal)"
+    action_priority: "Routine Monitoring"
+  moderate:
+    min_score: 30.0
+    max_score: 54.9
+    color: "#EAB308" # Yellow
+    label: "Moderate Risk (Heat Alert)"
+    action_priority: "Precautionary & Advisory"
+  high:
+    min_score: 55.0
+    max_score: 79.9
+    color: "#F97316" # Orange
+    label: "High Risk (Severe Heatwave Alert)"
+    action_priority: "Targeted Administrative Intervention"
+  very_high:
+    min_score: 80.0
+    max_score: 100.0
+    color: "#EF4444" # Red
+    label: "Very High Risk (Extreme Emergency Alert)"
+    action_priority: "Emergency Civic Deployment & Life Support"

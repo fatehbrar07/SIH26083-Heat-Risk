@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  heat-risk-engine:
+    build: .
+    container_name: sih26083-heat-risk-app
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=SIH26083 Extreme Heatwave Early Warning System
+      - APP_ENV=production
+      - DEBUG=false
+      - DEMO_MODE=false
+      - PORT=8000
+      - HOST=0.0.0.0
+    volumes:
+      - ./data/processed:/app/data/processed
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

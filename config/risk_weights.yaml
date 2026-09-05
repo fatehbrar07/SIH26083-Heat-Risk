@@ -1,0 +1,31 @@
+# Vulnerability and Risk Weighting Configuration
+# Grounded in demographic vulnerability research (Census India / NDMA / WHO guidelines)
+
+vulnerability:
+  # Demographic weights (sum to 1.0)
+  weights:
+    elderly_share: 0.35          # Population proportion age 60+ (higher physiological vulnerability)
+    children_share: 0.15         # Population proportion age 0-6 (underdeveloped thermoregulation)
+    outdoor_worker_share: 0.25   # Daily wage, construction, agricultural labor proxy
+    population_density: 0.15     # Urban crowding and micro-heat amplification proxy
+    informal_housing_share: 0.10 # Tin roof / kutcha housing thermal trap proxy
+
+  # Normalization bounds for Indian urban wards (min, max)
+  normalization:
+    elderly_share: [0.04, 0.18]        # 4% to 18%
+    children_share: [0.05, 0.20]       # 5% to 20%
+    outdoor_worker_share: [0.10, 0.50] # 10% to 50%
+    population_density: [5000, 45000]  # people per sq km
+    informal_housing_share: [0.05, 0.65] # 5% to 65%
+
+risk_matrix:
+  # Relative contributions to final human heat risk score (0-100)
+  hazard_weight: 0.60         # Physiological thermal stress (UTCI / WBGT)
+  vulnerability_weight: 0.40  # Ward demographic vulnerability
+
+  # Multi-day persistence multipliers (consecutive days of extreme thermal stress)
+  duration_multiplier:
+    day_1: 1.00
+    day_2: 1.10
+    day_3: 1.20
+    day_4_plus: 1.30

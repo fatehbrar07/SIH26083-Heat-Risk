@@ -1,0 +1,14 @@
+# SIH26083 Requirement Traceability Matrix
+
+This matrix maps every mandate from the official SIH26083 problem statement (Ministry of Earth Sciences / NCMRWF) to its implementation status, software module, and verifiable evidence in this codebase.
+
+| SIH26083 PS Requirement | Implementation Status | Software Module / File | Verifiable Evidence | Scientific / Practical Limitation |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Human Thermal Stress Index** (combining temp, humidity, wind, solar radiation) | **Fully Implemented** | `backend/app/thermal/utci_engine.py`<br>`backend/app/thermal/wbgt_engine.py` | Computes UTCI (°C) and ISO 7243 WBGT (°C) dynamically from $T2M + RH + WS + GHI$. | High solar radiation ($GHI$) approximated via global horizontal irradiance. |
+| **2. Multiple Standard Indices** (WBGT, UTCI, Heat Index) | **Fully Implemented** | `backend/app/thermal/` (UTCI, WBGT, Heat Index modules) | All 3 indices computed concurrently and exposed via `/api/v1/thermal/` endpoints. | Heat Index kept as comparative baseline; UTCI/WBGT used for primary risk. |
+| **3. 3–5 Day Anticipation / Early Warning** | **Fully Implemented** | `backend/app/data_sources/open_meteo.py`<br>`backend/app/api/v1.py` | Dynamic D+1 to D+5 hourly forecast pipeline providing forward thermal stress horizons. | Numerical weather prediction model uncertainty increases past Day 3. |
+| **4. Demographic Vulnerability Integration** (Elderly, Outdoor workers) | **Fully Implemented** | `backend/app/vulnerability/hvi_engine.py` | Heat Vulnerability Index (HVI) scoring elderly (60+), children, outdoor laborers, density, and housing. | Census 2011 baseline used as normalized spatial vulnerability proxy. |
+| **5. GIS Mapping & Ward-Level Risk Attribution** | **Fully Implemented** | `backend/app/gis/ward_mapping.py`<br>`frontend/app.js` (Leaflet Map) | GeoJSON ward polygons color-coded by composite risk score with interactive tooltips. | Risk attribution layer over meteorological grid; not separate ward-level NWP physics. |
+| **6. Actionable Public-Health & Civic Advisories** | **Fully Implemented** | `backend/app/advisory/advisory_engine.py` | Tiered NDMA/NCDC-aligned municipal playbooks (cooling shelters, 15-min rest cycles, hospital ORS). | Administrative execution rests with local municipal authorities. |
+| **7. Automated API-Triggered Alerts** | **Fully Implemented** | `backend/app/api/v1.py` (`/api/v1/advisory`) | Machine-readable JSON payloads + webhook / Telegram bot integration ready. | WhatsApp requires Meta Cloud Business account credentials (Tier 2). |
+| **8. Mortality / Hospitalization Risk Concept** | **Scientifically Implemented** (Calibrated Relative Risk) | `backend/app/risk/risk_engine.py` | Relative risk score (0–100) calibrated against published Indian epidemiological curves. | Real-time daily ward deaths are confidential; avoids black-box fabricated AI counts. |

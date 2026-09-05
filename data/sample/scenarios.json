@@ -1,0 +1,84 @@
+{
+  "scenarios": [
+    {
+      "id": "scenario_a_dry_heat",
+      "title": "Scenario A: High Dry Heat (Desert/North-West Flow)",
+      "description": "40°C ambient dry-bulb temperature with low relative humidity (20%) and moderate wind (3.5 m/s). Allows substantial evaporative cooling through sweating.",
+      "conditions": {
+        "air_temperature_c": 40.0,
+        "relative_humidity_pct": 20.0,
+        "wind_speed_2m_ms": 3.5,
+        "solar_radiation_w_m2": 650.0,
+        "duration_days": 1
+      },
+      "expected_outcome": {
+        "utci_approx_c": 36.5,
+        "utci_category": "Strong Heat Stress",
+        "wbgt_approx_c": 27.2,
+        "wbgt_category": "Caution",
+        "heat_index_c": 38.9,
+        "risk_level": "Moderate to High (depending on ward vulnerability)"
+      }
+    },
+    {
+      "id": "scenario_b_humid_heat",
+      "title": "Scenario B: Lethal Humid Heat (Monsoon Break / Compounding Humidity)",
+      "description": "Identical 40°C air temperature but with high relative humidity (70%) and stagnant low wind (1.0 m/s). Human sweat cannot evaporate, halting core thermoregulation.",
+      "conditions": {
+        "air_temperature_c": 40.0,
+        "relative_humidity_pct": 70.0,
+        "wind_speed_2m_ms": 1.0,
+        "solar_radiation_w_m2": 650.0,
+        "duration_days": 1
+      },
+      "expected_outcome": {
+        "utci_approx_c": 48.2,
+        "utci_category": "Extreme Heat Stress",
+        "wbgt_approx_c": 35.8,
+        "wbgt_category": "Extreme Danger (Halt physical work)",
+        "heat_index_c": 68.5,
+        "risk_level": "Very High / Emergency Alert (Critical hyperthermia risk)"
+      }
+    },
+    {
+      "id": "scenario_c_delhi_2024_heatwave",
+      "title": "Scenario C: June 2024 Delhi Multi-Day Heatwave Spike",
+      "description": "Retrospective hindcast scenario representing the severe June 2024 heatwave: 44.5°C ambient, 42% humidity, persistent 4-day exposure with high solar load.",
+      "conditions": {
+        "air_temperature_c": 44.5,
+        "relative_humidity_pct": 42.0,
+        "wind_speed_2m_ms": 2.2,
+        "solar_radiation_w_m2": 820.0,
+        "duration_days": 4
+      },
+      "expected_outcome": {
+        "utci_approx_c": 51.0,
+        "utci_category": "Extreme Heat Stress",
+        "wbgt_approx_c": 34.5,
+        "wbgt_category": "Extreme Danger",
+        "heat_index_c": 58.2,
+        "risk_level": "Very High (Emergency Civic Activation)"
+      }
+    },
+    {
+      "id": "scenario_d_mild_conditions",
+      "title": "Scenario D: Baseline Spring/Mild Summer",
+      "description": "30°C temperature, 40% humidity, pleasant breeze (3.0 m/s), moderate solar radiation.",
+      "conditions": {
+        "air_temperature_c": 30.0,
+        "relative_humidity_pct": 40.0,
+        "wind_speed_2m_ms": 3.0,
+        "solar_radiation_w_m2": 450.0,
+        "duration_days": 1
+      },
+      "expected_outcome": {
+        "utci_approx_c": 29.5,
+        "utci_category": "Moderate Heat Stress",
+        "wbgt_approx_c": 23.8,
+        "wbgt_category": "Normal",
+        "heat_index_c": 30.5,
+        "risk_level": "Low / Routine Monitoring"
+      }
+    }
+  ]
+}

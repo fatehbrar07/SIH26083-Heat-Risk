@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIH26083 — Extreme Heatwave Early Warning & Human Thermal Stress OS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #map { height: 440px; border-radius: 0.5rem; z-index: 10; }
+        .gradient-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
+
+    <!-- Top Navigation -->
+    <header class="gradient-header border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex flex-wrap items-center justify-between shadow-xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-orange-500 text-white p-2 rounded-lg font-black text-xl shadow-lg shadow-orange-500/30">☀️ SIH26083</div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-wide">Extreme Heatwave Early Warning & Thermal Stress OS</h1>
+                <p class="text-xs text-slate-400">MoES / NCMRWF | "What weather DOES to human health" — 3–5 Day Predictive Anticipation</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3 text-xs">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+                <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Tier-1 Live Data
+            </span>
+            <span class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                Pilot: Delhi Municipal Wards
+            </span>
+            <a href="/docs" target="_blank" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium transition">
+                API Docs ↗
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- Critical Notice Banner -->
+        <div class="bg-slate-900 border-l-4 border-orange-500 p-4 rounded-r-lg shadow flex items-center justify-between">
+            <div>
+                <span class="text-orange-400 font-semibold text-sm uppercase tracking-wider">Operational Paradigm Shift</span>
+                <p class="text-xs text-slate-300 mt-0.5">
+                    Translating dry-bulb weather into physiological thermal strain (<strong>UTCI & ISO 7243 WBGT</strong>) multiplied by demographic vulnerability (<strong>HVI</strong>) for actionable municipal mitigation.
+                </p>
+            </div>
+            <div class="text-right text-xs text-slate-400">
+                <span class="text-slate-200 font-mono">Prototype Relative Risk</span><br>
+                <span>Not a clinical mortality prediction</span>
+            </div>
+        </div>
+
+        <!-- Scenario Selector & Live Controls -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider">🔬 Interactive Scenario & Stress Sandbox</h2>
+                    <p class="text-xs text-slate-400">Compare identical ambient temperatures under contrasting humidity/radiation regimes.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="loadScenario('scenario_a_dry_heat')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded border border-slate-700 transition">
+                        🌵 Scenario A: Dry Heat (40°C, 20% RH)
+                    </button>
+                    <button onclick="loadScenario('scenario_b_humid_heat')" class="px-3 py-1.5 bg-red-950 hover:bg-red-900 text-red-300 text-xs rounded border border-red-800 transition font-bold">
+                        ⚠️ Scenario B: Lethal Humid Heat (40°C, 70% RH)
+                    </button>
+                    <button onclick="loadScenario('scenario_c_delhi_2024_heatwave')" class="px-3 py-1.5 bg-amber-950 hover:bg-amber-900 text-amber-300 text-xs rounded border border-amber-800 transition">
+                        🔥 June 2024 Delhi Spike (44.5°C)
+                    </button>
+                    <button onclick="fetchLiveForecast()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded font-medium transition">
+                        🔄 Live Forecast (D+1 to D+5)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sliders Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-800">
+                <div>
+                    <label class="flex justify-between text-xs text-slate-300 font-medium">
+                        <span>Air Temp (2m):</span> <span id="temp-val" class="font-bold text-orange-400">40.0 °C</span>
+                    </label>
+                    <input type="range" id="temp-slider" min="25" max="50" step="0.5" value="40" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500" oninput="updateControls()">
+                </div>
+                <div>
+                    <label class="flex justify-between text-xs text-slate-300 font-medium">
+                        <span>Relative Humidity:</span> <span id="rh-val" class="font-bold text-blue-400">35.0 %</span>
+                    </label>
+                    <input type="range" id="rh-slider" min="10" max="95" step="1" value="35" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" oninput="updateControls()">
+                </div>
+                <div>
+                    <label class="flex justify-between text-xs text-slate-300 font-medium">
+                        <span>Wind Speed (2m):</span> <span id="wind-val" class="font-bold text-emerald-400">2.5 m/s</span>
+                    </label>
+                    <input type="range" id="wind-slider" min="0.5" max="10" step="0.1" value="2.5" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500" oninput="updateControls()">
+                </div>
+                <div>
+                    <label class="flex justify-between text-xs text-slate-300 font-medium">
+                        <span>Solar Irradiance (GHI):</span> <span id="solar-val" class="font-bold text-amber-400">650 W/m²</span>
+                    </label>
+                    <input type="range" id="solar-slider" min="0" max="1000" step="10" value="650" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500" oninput="updateControls()">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-Pillar Live Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- UTCI Card -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-1">
+                <div class="text-xs text-slate-400 font-semibold uppercase">Universal Thermal Climate Index</div>
+                <div class="flex items-baseline space-x-2">
+                    <span id="utci-display" class="text-3xl font-black text-white font-mono">--</span>
+                    <span class="text-xs text-slate-400">°C (UTCI)</span>
+                </div>
+                <div id="utci-tag" class="text-xs font-bold px-2 py-0.5 rounded w-max bg-slate-800 text-slate-300">Calculating...</div>
+                <p class="text-[11px] text-slate-400 pt-1">Multi-node dynamic human thermoregulation (WMO/Fiala).</p>
+            </div>
+
+            <!-- WBGT Card -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-1">
+                <div class="text-xs text-slate-400 font-semibold uppercase">Wet-Bulb Globe Temp (WBGT)</div>
+                <div class="flex items-baseline space-x-2">
+                    <span id="wbgt-display" class="text-3xl font-black text-white font-mono">--</span>
+                    <span class="text-xs text-slate-400">°C (Outdoor)</span>
+                </div>
+                <div id="wbgt-tag" class="text-xs font-bold px-2 py-0.5 rounded w-max bg-slate-800 text-slate-300">Calculating...</div>
+                <p class="text-[11px] text-slate-400 pt-1">ISO 7243 / NIOSH occupational work-rest limit.</p>
+            </div>
+
+            <!-- Heat Index Card -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-1">
+                <div class="text-xs text-slate-400 font-semibold uppercase">NOAA Heat Index (Baseline)</div>
+                <div class="flex items-baseline space-x-2">
+                    <span id="hi-display" class="text-3xl font-black text-white font-mono">--</span>
+                    <span class="text-xs text-slate-400">°C (Apparent)</span>
+                </div>
+                <div id="hi-tag" class="text-xs font-bold px-2 py-0.5 rounded w-max bg-slate-800 text-slate-300">Calculating...</div>
+                <p class="text-[11px] text-slate-400 pt-1">Standard NWS empirical shade-temperature baseline.</p>
+            </div>
+
+            <!-- Highest Ward Risk Card -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow space-y-1 border-l-4 border-l-red-500">
+                <div class="text-xs text-slate-400 font-semibold uppercase">Peak Ward Risk Score</div>
+                <div class="flex items-baseline space-x-2">
+                    <span id="peak-risk-display" class="text-3xl font-black text-red-400 font-mono">--</span>
+                    <span class="text-xs text-slate-400">/ 100</span>
+                </div>
+                <div id="peak-risk-tag" class="text-xs font-bold px-2 py-0.5 rounded w-max bg-red-950 text-red-300">Calculating...</div>
+                <p class="text-[11px] text-slate-400 pt-1">Stress × Ward Demographics (Census 2011).</p>
+            </div>
+        </div>
+
+        <!-- Main Workspace: GIS Map + Forecast & Vulnerability -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left: GIS Map (7 cols) -->
+            <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">🗺️ Hyper-Local Ward Risk Attribution Map</h3>
+                        <p class="text-xs text-slate-400">Click any ward polygon to inspect demographic vulnerability & custom civic triggers.</p>
+                    </div>
+                    <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">Delhi Pilot Wards</span>
+                </div>
+                <div id="map"></div>
+                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <span>Risk Legend:</span>
+                    <div class="flex items-center space-x-3">
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 mr-1"></span> Low (<30)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-1"></span> Moderate (30-54)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-orange-500 mr-1"></span> High (55-79)</span>
+                        <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-red-500 mr-1"></span> Very High (80+)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Selected Ward Inspector & 5-Day Forecast (5 cols) -->
+            <div class="lg:col-span-5 space-y-4">
+
+                <!-- Ward Inspector Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-3">
+                    <div class="border-b border-slate-800 pb-2">
+                        <div class="text-xs text-orange-400 font-bold uppercase tracking-wider">Selected Ward Details</div>
+                        <h4 id="inspector-ward-name" class="text-base font-bold text-white">Seelampur (Shahdara North)</h4>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                            <span class="text-slate-400">Ward Vulnerability (HVI):</span>
+                            <div id="inspector-hvi" class="font-bold text-sm text-slate-200">76.5 (High)</div>
+                        </div>
+                        <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                            <span class="text-slate-400">Outdoor Laborers:</span>
+                            <div id="inspector-workers" class="font-bold text-sm text-slate-200">35.0% (~41,440)</div>
+                        </div>
+                        <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                            <span class="text-slate-400">Elderly Population (60+):</span>
+                            <div id="inspector-elderly" class="font-bold text-sm text-slate-200">10.0% (~11,840)</div>
+                        </div>
+                        <div class="bg-slate-950 p-2 rounded border border-slate-800">
+                            <span class="text-slate-400">Population Density:</span>
+                            <div id="inspector-density" class="font-bold text-sm text-slate-200">37,000 / km²</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                        <div class="text-[11px] text-slate-400 font-semibold uppercase">Immediate Municipal Action:</div>
+                        <div id="inspector-action" class="text-xs text-slate-300 font-medium leading-relaxed">
+                            Loading action triggers...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5-Day Forecast Chart -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-white uppercase tracking-wider">📈 3–5 Day Forecast Trajectory</h3>
+                        <span class="text-[11px] text-slate-400">Open-Meteo NWP Ensemble</span>
+                    </div>
+                    <div class="h-44">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Bilingual Action Advisories (NDMA & NCDC Playbooks) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">📋 Action-Triggered Public Health Advisories</h3>
+                    <p class="text-xs text-slate-400">Grounded in NDMA National Heat Action Plan Guidelines & NCDC Heat-Related Illness Framework.</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="lang-en-btn" onclick="toggleLang('en')" class="px-3 py-1 bg-orange-600 text-white text-xs rounded font-bold">English</button>
+                    <button id="lang-hi-btn" onclick="toggleLang('hi')" class="px-3 py-1 bg-slate-800 text-slate-300 text-xs rounded font-bold hover:bg-slate-700">हिंदी (Hindi)</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Municipal Administration Card -->
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-lg space-y-2">
+                    <div class="text-xs font-bold text-orange-400 uppercase flex items-center">
+                        <span class="mr-1.5">🏛️</span> Municipal Administration
+                    </div>
+                    <ul id="advisory-municipal" class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                        <li>Loading municipal protocol...</li>
+                    </ul>
+                </div>
+
+                <!-- Healthcare & Hospital Card -->
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-lg space-y-2">
+                    <div class="text-xs font-bold text-red-400 uppercase flex items-center">
+                        <span class="mr-1.5">🏥</span> Healthcare & Hospitals
+                    </div>
+                    <ul id="advisory-hospital" class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                        <li>Loading hospital emergency protocol...</li>
+                    </ul>
+                </div>
+
+                <!-- Public & Workers Card -->
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-lg space-y-2">
+                    <div class="text-xs font-bold text-emerald-400 uppercase flex items-center">
+                        <span class="mr-1.5">👷</span> Outdoor Workers & Citizens
+                    </div>
+                    <ul id="advisory-citizen" class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                        <li>Loading citizen guidance...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier-1 Data Provenance Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow text-xs space-y-2">
+            <div class="text-slate-400 font-semibold uppercase tracking-wider">Audit Trail & Data Provenance</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-300 text-[11px]">
+                <div>
+                    <strong class="text-slate-200">NASA POWER API:</strong> 40-year daily gridded reanalysis (MERRA-2). Keyless REST, free, verified live.
+                </div>
+                <div>
+                    <strong class="text-slate-200">Open-Meteo High-Res NWP:</strong> 5-day hourly forecast ($T2M, RH, WS, GHI$). Keyless REST, verified live.
+                </div>
+                <div>
+                    <strong class="text-slate-200">Census of India 2011:</strong> PCA demographic baseline normalized for ward-level vulnerability weighting.
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- App JavaScript Logic -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

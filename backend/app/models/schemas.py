@@ -21,6 +21,19 @@ class RiskCalculateRequest(BaseModel):
     solar_radiation_w_m2: float = Field(default=650.0, description="Solar irradiance in W/m^2")
     consecutive_extreme_days: int = Field(default=1, description="Number of consecutive extreme heat days")
 
+class AlertBroadcastRequest(BaseModel):
+    ward_id: Optional[str] = Field(default=None, description="Target Ward ID (e.g. DEL-W01) or null for all high/critical risk wards")
+    min_risk_threshold: float = Field(default=55.0, description="Minimum risk score threshold for dispatch (default 55.0 for High/Critical)")
+    temperature_c: float = Field(default=43.0, description="Air temperature in Celsius")
+    relative_humidity_pct: float = Field(default=45.0, description="Relative humidity (0-100%)")
+    wind_speed_ms: float = Field(default=2.0, description="Wind speed in m/s")
+    solar_radiation_w_m2: float = Field(default=750.0, description="Solar irradiance in W/m^2")
+    consecutive_extreme_days: int = Field(default=2, description="Number of consecutive extreme heat days")
+    channel: str = Field(default="telegram", description="Dispatch channel (telegram/sms/push)")
+    recipient_chat_id: Optional[str] = Field(default=None, description="Optional override Telegram chat ID or channel handle")
+    language: str = Field(default="both", description="Language preference ('en', 'hi', or 'both')")
+    simulate: bool = Field(default=True, description="Whether to run in simulated mode or attempt live webhook delivery")
+
 class HealthResponse(BaseModel):
     status: str
     service: str

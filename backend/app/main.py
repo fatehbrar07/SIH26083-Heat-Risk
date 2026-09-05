@@ -44,6 +44,13 @@ async def root():
         "health": "/health"
     }
 
+@app.get("/app.js", include_in_schema=False)
+async def get_app_js():
+    js_file = os.path.join(frontend_path, "app.js")
+    if os.path.exists(js_file):
+        return FileResponse(js_file, media_type="application/javascript")
+    return {"error": "app.js not found"}
+
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """System health check and live status of Tier-1 external data sources."""

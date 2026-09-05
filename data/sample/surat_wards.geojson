@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "name": "Surat_Sample_Wards_Risk_Layer",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W01",
+        "ward_name": "Limbayat Dense Settlement",
+        "zone": "Limbayat Zone",
+        "district": "Surat",
+        "area_sqkm": 4.2,
+        "centroid_lat": 21.1750,
+        "centroid_lon": 72.8580
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.845, 21.162], [72.872, 21.162], [72.872, 21.188], [72.845, 21.188], [72.845, 21.162]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W02",
+        "ward_name": "Pandesara GIDC Industrial",
+        "zone": "South Zone",
+        "district": "Surat",
+        "area_sqkm": 6.8,
+        "centroid_lat": 21.1350,
+        "centroid_lon": 72.8250
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.808, 21.120], [72.842, 21.120], [72.842, 21.150], [72.808, 21.150], [72.808, 21.120]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W03",
+        "ward_name": "Varachha Diamond Cluster",
+        "zone": "East Zone (Varachha-A)",
+        "district": "Surat",
+        "area_sqkm": 5.0,
+        "centroid_lat": 21.2180,
+        "centroid_lon": 72.8650
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.850, 21.205], [72.880, 21.205], [72.880, 21.232], [72.850, 21.232], [72.850, 21.205]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W04",
+        "ward_name": "Udhna Industrial Belt",
+        "zone": "South-East Zone",
+        "district": "Surat",
+        "area_sqkm": 5.5,
+        "centroid_lat": 21.1520,
+        "centroid_lon": 72.8380
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.822, 21.138], [72.855, 21.138], [72.855, 21.165], [72.822, 21.165], [72.822, 21.138]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W05",
+        "ward_name": "Katargam Textile Hub",
+        "zone": "North Zone",
+        "district": "Surat",
+        "area_sqkm": 6.0,
+        "centroid_lat": 21.2350,
+        "centroid_lon": 72.8280
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810, 21.220], [72.845, 21.220], [72.845, 21.250], [72.810, 21.250], [72.810, 21.220]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W06",
+        "ward_name": "Athwa / Dumas Coastal",
+        "zone": "South-West Zone",
+        "district": "Surat",
+        "area_sqkm": 9.5,
+        "centroid_lat": 21.1580,
+        "centroid_lon": 72.7750
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.750, 21.138], [72.800, 21.138], [72.800, 21.178], [72.750, 21.178], [72.750, 21.138]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W07",
+        "ward_name": "Rander / Adajan",
+        "zone": "West Zone",
+        "district": "Surat",
+        "area_sqkm": 7.2,
+        "centroid_lat": 21.1980,
+        "centroid_lon": 72.7880
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.768, 21.182], [72.808, 21.182], [72.808, 21.215], [72.768, 21.215], [72.768, 21.182]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "SUR-W08",
+        "ward_name": "Chowk Bazar / Old Central",
+        "zone": "Central Zone",
+        "district": "Surat",
+        "area_sqkm": 3.0,
+        "centroid_lat": 21.1950,
+        "centroid_lon": 72.8220
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810, 21.185], [72.835, 21.185], [72.835, 21.205], [72.810, 21.205], [72.810, 21.185]]]
+      }
+    }
+  ]
+}

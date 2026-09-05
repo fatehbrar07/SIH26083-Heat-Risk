@@ -1,4 +1,6 @@
 {
+  "city": "Delhi NCR, India",
+  "city_id": "delhi",
   "source": "Census of India 2011 Primary Census Abstract (PCA) Baseline",
   "note": "Baseline demographic proxy indicators for Heat Vulnerability Index (HVI) calculations. Labeled strictly as 2011 baseline data.",
   "wards": {

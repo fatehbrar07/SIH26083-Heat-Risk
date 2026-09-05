@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "name": "Mumbai_Sample_Wards_Risk_Layer",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W01",
+        "ward_name": "Dharavi / Ward G-North",
+        "zone": "Zone 2",
+        "district": "Mumbai City",
+        "area_sqkm": 2.4,
+        "centroid_lat": 19.0430,
+        "centroid_lon": 72.8570
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.845, 19.030], [72.870, 19.030], [72.870, 19.055], [72.845, 19.055], [72.845, 19.030]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W02",
+        "ward_name": "Govandi / Shivaji Nagar (M-East)",
+        "zone": "Zone 5",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 5.2,
+        "centroid_lat": 19.0550,
+        "centroid_lon": 72.9250
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.905, 19.040], [72.945, 19.040], [72.945, 19.070], [72.905, 19.070], [72.905, 19.040]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W03",
+        "ward_name": "Kurla West (L-Ward)",
+        "zone": "Zone 5",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 6.0,
+        "centroid_lat": 19.0700,
+        "centroid_lon": 72.8800
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.862, 19.055], [72.898, 19.055], [72.898, 19.085], [72.862, 19.085], [72.862, 19.055]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W04",
+        "ward_name": "Andheri East MIDC (K-East)",
+        "zone": "Zone 3",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 8.5,
+        "centroid_lat": 19.1180,
+        "centroid_lon": 72.8650
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.845, 19.100], [72.885, 19.100], [72.885, 19.135], [72.845, 19.135], [72.845, 19.100]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W05",
+        "ward_name": "Colaba / Fort (A-Ward)",
+        "zone": "Zone 1",
+        "district": "Mumbai City",
+        "area_sqkm": 4.8,
+        "centroid_lat": 18.9220,
+        "centroid_lon": 72.8300
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.815, 18.900], [72.845, 18.900], [72.845, 18.945], [72.815, 18.945], [72.815, 18.900]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W06",
+        "ward_name": "Bandra West (H-West)",
+        "zone": "Zone 3",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 5.0,
+        "centroid_lat": 19.0550,
+        "centroid_lon": 72.8300
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.815, 19.040], [72.845, 19.040], [72.845, 19.070], [72.815, 19.070], [72.815, 19.040]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W07",
+        "ward_name": "Malad West / Marve (P-North)",
+        "zone": "Zone 4",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 9.0,
+        "centroid_lat": 19.1880,
+        "centroid_lon": 72.8350
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810, 19.170], [72.860, 19.170], [72.860, 19.205], [72.810, 19.205], [72.810, 19.170]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ward_id": "MUM-W08",
+        "ward_name": "Borivali East / SGNP Perimeter (R-Central)",
+        "zone": "Zone 7",
+        "district": "Mumbai Suburban",
+        "area_sqkm": 10.5,
+        "centroid_lat": 19.2300,
+        "centroid_lon": 72.8650
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.845, 19.210], [72.890, 19.210], [72.890, 19.250], [72.845, 19.250], [72.845, 19.210]]]
+      }
+    }
+  ]
+}

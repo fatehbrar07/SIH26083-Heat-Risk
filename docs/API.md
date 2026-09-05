@@ -55,15 +55,17 @@ ReDoc Reference: `http://localhost:8000/redoc`
     "standard": "Universal Thermal Climate Index (WMO / Fiala model)"
   },
   "wbgt": {
-    "value_c": 30.82,
-    "category": "High Occupational Stress (30.0 - 32.0°C)",
+    "value_c": 30.85,
+    "category": "Danger",
+    "severity": "HIGH",
     "color": "#F97316",
     "work_rest_cycle": "25% Work / 75% Rest per hour under shade",
-    "water_intake_liters_per_hr": 1.0,
+    "water_intake_hourly": "1.00 Liters / hour",
+    "action": "Mandate shade breaks every 15 minutes. Pre-position ORS hydration stations.",
     "standard": "ISO 7243:2017 & NIOSH Criteria"
   },
   "heat_index": {
-    "value_c": 49.3,
+    "value_c": 46.2,
     "category": "Danger",
     "color": "#F97316",
     "standard": "NOAA NWS Rothfusz baseline"
@@ -73,20 +75,16 @@ ReDoc Reference: `http://localhost:8000/redoc`
 
 ---
 
-#### 3. 5-Day Forward Predictive Thermal Projections
+#### 3. 5-Day Thermal Projections
 - **Endpoint:** `GET /api/v1/thermal/forecast`
-- **Query Parameters:**
-  - `lat` (float, default 28.6139)
-  - `lon` (float, default 77.2090)
-- **Description:** Evaluates 5-day forward hourly Numerical Weather Prediction data from Open-Meteo and projects daily peak UTCI, WBGT, and Heat Index trajectories.
+- **Query Parameters:** `lat` (float), `lon` (float)
+- **Description:** Generates forward 5-day horizon projections (D+1 to D+5) evaluating diurnal peak UTCI and WBGT indices.
 
 ---
 
-#### 4. Ward-Level Composite Relative Risk
+#### 4. Ward-Level Composite Human Heat-Health Risk
 - **Endpoint:** `GET /api/v1/risk/current`
-- **Query Parameters:**
-  - `ward_id` (string, e.g., `DEL-W01`): Target administrative ward
-  - `temp_c`, `rh_pct`, `wind_speed_ms`, `solar_radiation_w_m2`, `consecutive_extreme_days`
+- **Query Parameters:** `ward_id`, `temp_c`, `rh_pct`, `wind_speed_ms`, `solar_radiation_w_m2`, `consecutive_extreme_days`
 - **Sample Response:**
 ```json
 {
@@ -117,3 +115,53 @@ ReDoc Reference: `http://localhost:8000/redoc`
 - **Endpoint:** `GET /api/v1/advisory`
 - **Query Parameters:** `ward_id`, `temp_c`, `rh_pct`, etc.
 - **Response:** Structured municipal administration, hospital emergency, and citizen advisories in English and Hindi.
+
+---
+
+#### 7. NIOSH Occupational Heat Advisory & Work-Rest Schedules
+- **Endpoint:** `GET /api/v1/advisory/occupational`
+- **Query Parameters:**
+  - `temp_c` (float, default 40.0): Air temperature in °C
+  - `rh_pct` (float, default 35.0): Relative humidity %
+  - `wind_speed_ms` (float, default 2.5): Wind speed in m/s
+  - `solar_radiation_w_m2` (float, default 650.0): Solar irradiance in W/m²
+  - `workload` (string, default `moderate`): `light`, `moderate`, `heavy`, `very_heavy`
+  - `sector` (string, optional): `gig_delivery`, `construction`, `agriculture`, `street_vendor`
+  - `acclimatized` (bool, default `true`): Worker heat acclimatization state
+- **Response:** Detailed NIOSH/ISO 7243 work-rest schedule (minutes work / minutes rest per hour), hourly hydration quota (L/hr), electrolyte requirements, shift modification recommendations, heat illness emergency protocols, and targeted sector directives.
+
+---
+
+#### 8. Municipal Alert Dispatch & Telegram Broadcast
+- **Endpoint:** `POST /api/v1/alerts/broadcast`
+- **Request Body (`application/json`):**
+```json
+{
+  "ward_id": "DEL-W01",
+  "min_risk_threshold": 55.0,
+  "temperature_c": 44.0,
+  "relative_humidity_pct": 45.0,
+  "wind_speed_ms": 2.0,
+  "solar_radiation_w_m2": 750.0,
+  "consecutive_extreme_days": 2,
+  "channel": "telegram",
+  "language": "both",
+  "simulate": true
+}
+```
+- **Response:** Broadcast confirmation detailing broadcast ID, list of alerted wards, triggered administrative actions (e.g. `ACTIVATE_COOLING_CENTERS`, `HALT_OUTDOOR_LABOR_11_TO_16`), delivery audit, and HTML bulletin payloads.
+
+---
+
+#### 9. Historical Heatwave Hindcast Catalog
+- **Endpoint:** `GET /api/v1/hindcast/events`
+- **Description:** Lists available historical heatwave benchmark events for lead-time replay and validation.
+
+---
+
+#### 10. Historical Heatwave Lead-Time Hindcast Replay
+- **Endpoint:** `GET /api/v1/hindcast/replay`
+- **Query Parameters:**
+  - `event_id` (string, default `delhi_june_2024`): Historical event (`delhi_june_2024`, `ahmedabad_may_2010`, `delhi_may_2022`)
+  - `ward_id` (string, default `DEL-W01`): Target ward for socio-demographic vulnerability pairing
+- **Description:** Simulates the 5-day lead-time progression (D-5 to D-Day) proving 72h-120h early warning elevation before peak human thermal crisis.

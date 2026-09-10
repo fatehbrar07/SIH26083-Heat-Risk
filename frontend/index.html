@@ -11,8 +11,14 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- MapLibre GL JS (God's Eye 3D C2 Engine) -->
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <style>
         #map { height: 480px; border-radius: 0.75rem; z-index: 10; }
+        #godsEyeMap { height: 480px; border-radius: 0.75rem; z-index: 10; display: none; }
+        .hud-glow { text-shadow: 0 0 6px rgba(34, 211, 238, 0.8); font-family: ui-monospace, monospace; }
+        .ge-mode-btn.active { background: rgba(8, 145, 178, 0.35) !important; color: #67e8f9 !important; border-color: #0891b2 !important; }
         .gradient-header { background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e293b 100%); }
         .glass-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
         .leaflet-popup-content-wrapper {
@@ -266,9 +272,45 @@
                             </span>
                         </div>
                     </div>
-                    
-                    <!-- Leaflet Container -->
+
+                    <!-- God's Eye View Mode Bar -->
+                    <div class="flex flex-wrap items-center gap-1.5 pb-2.5">
+                        <button id="ge-mode-2d" onclick="setMapMode('2d')" class="ge-mode-btn active px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition">
+                            🗺️ 2D Wards
+                        </button>
+                        <button id="ge-mode-3d" onclick="setMapMode('3d')" class="ge-mode-btn px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition">
+                            🛰️ GOD'S EYE 3D
+                        </button>
+                        <button id="ge-mode-thermal" onclick="setMapMode('thermal')" class="ge-mode-btn px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition">
+                            🌡️ FLIR / LST
+                        </button>
+                        <button id="ge-mode-satellite" onclick="setMapMode('satellite')" class="ge-mode-btn px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition">
+                            🛰 SATELLITE
+                        </button>
+                        <button id="ge-india-btn" onclick="flyToIndiaOverview()" class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-amber-800 bg-amber-950/60 text-amber-300 transition">
+                            🇮🇳 All-India
+                        </button>
+                        <button id="ge-patrol-btn" onclick="toggleDronePatrol()" class="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-cyan-800 bg-cyan-950/60 text-cyan-300 transition ml-auto">
+                            ▶ UAV Patrol
+                        </button>
+                    </div>
+
+                    <!-- Leaflet (2D) Container -->
                     <div id="map" class="w-full border border-slate-800 shadow-inner"></div>
+
+                    <!-- God's Eye (MapLibre 3D) Container + Tactical HUD -->
+                    <div class="relative w-full">
+                        <div id="godsEyeMap" class="w-full border border-cyan-900/60 shadow-inner"></div>
+                        <!-- HUD telemetry overlay -->
+                        <div id="ge-hud" class="absolute top-2 left-2 z-20 pointer-events-none hidden bg-slate-950/75 border border-cyan-800/60 rounded-lg px-3 py-2 backdrop-blur-sm">
+                            <div class="hud-glow text-[10px] text-cyan-300 leading-4">
+                                <div>◈ THERMOSHIELD C2 — GOD'S EYE</div>
+                                <div id="hud-coords">LAT --.---- / LON --.----</div>
+                                <div id="hud-attitude">PITCH --° / BRG ---° / ALT -- km</div>
+                                <div id="hud-style">SENSOR: DARK-GRID</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Map Legend -->

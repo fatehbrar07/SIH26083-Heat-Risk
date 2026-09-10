@@ -44,7 +44,16 @@ const state = {
     },
     map: null,
     geojsonLayer: null,
-    forecastChart: null
+    forecastChart: null,
+    godsEye: {
+        map: null,
+        mode: '2d',          // '2d' | '3d' | 'thermal' | 'satellite'
+        pitch: 55,
+        bearing: -20,
+        patrolling: false,
+        patrolTimer: null,
+        lastGeoJSON: null
+    }
 };
 
 // -----------------------------------------------------------------------------
@@ -784,6 +793,10 @@ function renderGeoJSONOnMap(geojsonData) {
         state.map.removeLayer(state.geojsonLayer);
     }
 
+    // Cache for God's Eye 3D extrusion layer
+    state.godsEye.lastGeoJSON = geojsonData;
+    refreshGodsEyeData();
+
     state.geojsonLayer = L.geoJSON(geojsonData, {
         style: function (feature) {
             const riskScore = feature.properties.risk_score || 50;
@@ -1007,6 +1020,15 @@ function onCityChange(cityId) {
     // Update map view
     if (state.map) {
         state.map.flyTo(city.center, city.zoom, { duration: 1.2 });
+    }
+    if (state.godsEye.map) {
+        state.godsEye.map.flyTo({
+            center: [city.center[1], city.center[0]],
+            zoom: city.zoom - 0.5,
+            pitch: state.godsEye.mode === '2d' ? 0 : state.godsEye.pitch,
+            bearing: state.godsEye.bearing,
+            duration: 1800
+        });
     }
 
     // Update city badge
@@ -1367,6 +1389,13 @@ function renderHindcastStep() {
     if (imdStatusEl) imdStatusEl.textContent = step.imd_status;
     if (sihStatusEl) sihStatusEl.textContent = step.sih_status;
     if (rationaleEl) rationaleEl.textContent = step.mitigation_trigger;
+
+    // Sync God's Eye 3D zones with the hindcast timestep (drive weather sliders)
+    if (state.godsEye.map && typeof step.temp_c === 'number') {
+        state.weather.temp_c = step.temp_c;
+        if (typeof step.rh_pct === 'number') state.weather.rh_pct = step.rh_pct;
+        fetchCityRiskGeoJSON();
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1689,9 +1718,399 @@ function setLanguage(lang) {
     updateAdvisories();
 }
 
-// -----------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// GOD'S EYE VIEW — 3D Tactical C2 Engine (MapLibre GL)
+// ------------------------------------------------------------------------------
+
+const GODS_EYE_BASE_STYLES = {
+    dark: {
+        // Voyager: lighter grey-scale streets, wards pop out clearly at any zoom
+        tiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+        label: 'GRID-STREETS'
+    },
+    thermal: { tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', label: 'FLIR / LST (SIM)' },
+    satellite: { tiles: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', label: 'EO SATELLITE' }
+};
+
+// Emergency civic assets (cooling shelters, ambulances, water kiosks) per city
+const EMERGENCY_ASSETS = {
+    delhi: [
+        { type: 'shelter', name: 'NDMC Cooling Center — CP', lat: 28.6315, lon: 77.2167, cap: 200 },
+        { type: 'shelter', name: 'Shelter — Seelampur', lat: 28.6692, lon: 77.2685, cap: 120 },
+        { type: 'ambulance', name: '108 Ambulance Hub — LNJP', lat: 28.6389, lon: 77.2423, cap: 6 },
+        { type: 'ambulance', name: '108 Hub — Rohini', lat: 28.7041, lon: 77.1025, cap: 4 },
+        { type: 'water', name: 'Water Kiosk — Chandni Chowk', lat: 28.6506, lon: 77.2303, cap: 900 },
+        { type: 'water', name: 'ORS Depot — Karawal Nagar', lat: 28.6650, lon: 77.2940, cap: 500 }
+    ],
+    ahmedabad: [
+        { type: 'shelter', name: 'Cooling Center — Maninagar', lat: 23.0020, lon: 72.6010, cap: 150 },
+        { type: 'ambulance', name: '108 Hub — Civil Hospital', lat: 23.0530, lon: 72.6030, cap: 5 }
+    ],
+    surat: [
+        { type: 'shelter', name: 'Cooling Center — Varachha', lat: 21.2250, lon: 72.8600, cap: 100 }
+    ],
+    bhubaneswar: [
+        { type: 'shelter', name: 'Cooling Center — Old Town', lat: 20.2440, lon: 85.8390, cap: 120 }
+    ],
+    mumbai: [
+        { type: 'shelter', name: 'Cooling Center — Dharavi', lat: 19.0410, lon: 72.8545, cap: 200 },
+        { type: 'water', name: 'Water Kiosk — Kurla', lat: 19.0726, lon: 72.8845, cap: 700 }
+    ]
+};
+const ASSET_ICONS = { shelter: '❄', ambulance: '🚑', water: '💧' };
+const ASSET_COLORS = { shelter: '#38bdf8', ambulance: '#f43f5e', water: '#22d3ee' };
+
+function assetsToGeoJSON(cityId) {
+    const list = EMERGENCY_ASSETS[cityId] || [];
+    return {
+        type: 'FeatureCollection',
+        features: list.map(a => ({
+            type: 'Feature',
+            properties: { name: a.name, kind: a.type, cap: a.cap, icon: ASSET_ICONS[a.type] || '◆', color: ASSET_COLORS[a.type] || '#94a3b8' },
+            geometry: { type: 'Point', coordinates: [a.lon, a.lat] }
+        }))
+    };
+}
+
+function godsEyeStyleKey(mode) {
+    // Camera modes ('3d') are not basemap styles — map them to the default sensor
+    if (mode === 'thermal') return 'thermal';
+    if (mode === 'satellite') return 'satellite';
+    if (mode === 'dark') return 'dark';
+    return 'satellite'; // '2d', '3d', unknown → vivid satellite default
+}
+
+function initGodsEyeMap() {
+    if (typeof maplibregl === 'undefined') {
+        console.warn('MapLibre GL not loaded; God\'s Eye disabled.');
+        return;
+    }
+    const city = CITIES[state.city] || CITIES.delhi;
+    const [lat, lon] = city.center;
+    state.godsEye.map = new maplibregl.Map({
+        container: 'godsEyeMap',
+        style: buildGodsEyeStyle(godsEyeStyleKey(state.godsEye.mode)),
+        center: [lon, lat],
+        zoom: city.zoom - 0.3,
+        pitch: 55,
+        bearing: -20,
+        attributionControl: false
+    });
+
+    state.godsEye.map.on('load', () => {
+        state.godsEye.map.addSource('wards', { type: 'geojson', data: emptyFC() });
+        addGodsEyeLayers();
+        bindGodsEyeInteractions();
+        refreshGodsEyeData();
+    });
+
+    state.godsEye.map.on('move', updateGodsEyeHUD);
+}
+
+function emptyFC() { return { type: 'FeatureCollection', features: [] }; }
+
+function buildGodsEyeStyle(key) {
+    const base = GODS_EYE_BASE_STYLES[key];
+    return {
+        version: 8,
+        sources: {
+            basemap: { type: 'raster', tiles: [base.tiles], tileSize: 256, attribution: '' }
+        },
+        layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }]
+    };
+}
+
+function addGodsEyeLayers() {
+    const m = state.godsEye.map;
+
+    // Translucent orange ward zones — polygons, not towers
+    m.addLayer({
+        id: 'ward-zone-fill',
+        type: 'fill-extrusion',
+        source: 'wards',
+        paint: {
+            'fill-extrusion-color': [
+                'match', ['get', 'risk_band'],
+                'Critical', '#ef4444',
+                'High', '#f97316',
+                'Moderate', '#fbbf24',
+                'Low', '#34d399',
+                ['interpolate', ['linear'], ['get', 'risk_score'], 0, '#34d399', 50, '#fbbf24', 80, '#f97316', 100, '#ef4444']
+            ],
+            'fill-extrusion-height': ['interpolate', ['linear'], ['get', 'risk_score'], 0, 60, 50, 350, 100, 750],
+            'fill-extrusion-base': 0,
+            'fill-extrusion-opacity': 0.38,
+            'fill-extrusion-vertical-gradient': true
+        }
+    });
+
+    // Crisp bright outline over the translucent zone
+    m.addLayer({
+        id: 'ward-outline',
+        type: 'line',
+        source: 'wards',
+        paint: { 'line-color': '#fdba74', 'line-width': 1.6, 'line-opacity': 0.95 }
+    });
+
+    // Ward score labels at centroids
+    m.addSource('ward-zones', { type: 'geojson', data: emptyFC() });
+    m.addLayer({
+        id: 'ward-zone-labels',
+        type: 'symbol',
+        source: 'ward-zones',
+        layout: {
+            'text-field': ['concat', ['get', 'ward_id'], ' · ', ['to-string', ['get', 'risk_score']]],
+            'text-size': 13,
+            'text-offset': [0, 0],
+            'text-anchor': 'center',
+            'text-allow-overlap': true
+        },
+        paint: {
+            'text-color': '#fed7aa',
+            'text-halo-color': '#0f172a',
+            'text-halo-width': 2.2
+        }
+    });
+
+    // Emergency asset markers (shelters / ambulances / water) — pulsing dots
+    m.addSource('assets', { type: 'geojson', data: assetsToGeoJSON(state.city) });
+    m.addLayer({
+        id: 'assets-pulse',
+        type: 'circle',
+        source: 'assets',
+        paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 10, 13, 22],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.25,
+            'circle-blur': 0.6
+        }
+    });
+    m.addLayer({
+        id: 'assets-core',
+        type: 'circle',
+        source: 'assets',
+        paint: {
+            'circle-radius': 5.5,
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.95,
+            'circle-stroke-color': '#0f172a',
+            'circle-stroke-width': 1.5
+        }
+    });
+    m.addLayer({
+        id: 'assets-labels',
+        type: 'symbol',
+        source: 'assets',
+        layout: {
+            'text-field': ['get', 'icon'],
+            'text-size': 13,
+            'text-offset': [0, 0],
+            'text-allow-overlap': true
+        }
+    });
+
+    // Start pulse animation for critical wards
+    state.godsEye.pulsePhase = 0;
+    if (state.godsEye.pulseTimer) clearInterval(state.godsEye.pulseTimer);
+    state.godsEye.pulseTimer = setInterval(() => {
+        if (!state.godsEye.map || !state.godsEye.map.getLayer('ward-zone-fill')) return;
+        state.godsEye.pulsePhase = (state.godsEye.pulsePhase + 0.12) % (2 * Math.PI);
+        const pulse = 0.28 + 0.14 * (0.5 + 0.5 * Math.sin(state.godsEye.pulsePhase));
+        try {
+            state.godsEye.map.setPaintProperty('ward-zone-fill', 'fill-extrusion-opacity', [
+                'case', ['==', ['get', 'risk_band'], 'Critical'], pulse, 0.38
+            ]);
+            state.godsEye.map.setPaintProperty('assets-pulse', 'circle-opacity', 0.12 + 0.2 * (0.5 + 0.5 * Math.sin(state.godsEye.pulsePhase + 1)));
+        } catch (e) { /* layer not ready */ }
+    }, 60);
+}
+
+const RAD = Math.PI / 180;
+// Derive centroid point features from ward polygons (uses centroid_lat/lon baked into props, else bbox center)
+function wardsToZonePoints(fc) {
+    if (!fc || !fc.features) return emptyFC();
+    const pts = fc.features.map(f => {
+        const p = f.properties || {};
+        let lon = p.centroid_lon, lat = p.centroid_lat;
+        if (lon == null || lat == null) {
+            const ring = (((f.geometry || {}).coordinates || [])[0]) || [];
+            if (ring.length) {
+                lon = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+                lat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+            }
+        }
+        if (lon == null || lat == null) return null;
+        return { type: 'Feature', properties: p, geometry: { type: 'Point', coordinates: [lon, lat] } };
+    }).filter(Boolean);
+    return { type: 'FeatureCollection', features: pts };
+}
+
+function refreshGodsEyeData() {
+    if (!state.godsEye.map) return;
+    const src = state.godsEye.map.getSource('wards');
+    if (src && state.godsEye.lastGeoJSON) src.setData(state.godsEye.lastGeoJSON);
+    const zsrc = state.godsEye.map.getSource('ward-zones');
+    if (zsrc) zsrc.setData(wardsToZonePoints(state.godsEye.lastGeoJSON));
+    const asrc = state.godsEye.map.getSource('assets');
+    if (asrc) asrc.setData(assetsToGeoJSON(state.city));
+    updateGodsEyeHUD();
+}
+
+function bindGodsEyeInteractions() {
+    const m = state.godsEye.map;
+
+    m.on('click', 'ward-zone-fill', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        const p = e.features[0].properties;
+        const color = getRiskColor(p.risk_score);
+        const riskPct = Math.min(100, Math.max(0, p.risk_score || 0));
+        new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+                <div style="background:#0f172a;color:#f8fafc;padding:10px;border:1px solid #334155;border-radius:8px;font-family:sans-serif;">
+                    <div style="font-weight:800;color:#fb923c;">🛰️ ${p.ward_name || p.ward_id}</div>
+                    <div style="font-size:11px;margin-top:4px;">Ward: <b>${p.ward_id}</b></div>
+                    <div style="margin:6px 0 2px;height:8px;background:#1e293b;border-radius:4px;overflow:hidden;">
+                        <div style="width:${riskPct}%;height:100%;background:${color};transition:width .4s;"></div>
+                    </div>
+                    <div style="font-size:11px;">Risk: <b style="color:${color}">${p.risk_score} / 100</b> [${p.risk_band}]</div>
+                    <div style="font-size:11px;">UTCI: <b>${p.utci_c != null ? Number(p.utci_c).toFixed(1) + '°C' : '—'}</b> · WBGT: <b>${p.wbgt_c != null ? Number(p.wbgt_c).toFixed(1) + '°C' : '—'}</b></div>
+                    <div style="font-size:11px;">HVI: <b>${p.hvi_score}</b></div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">${p.action_priority || ''}</div>
+                </div>`)
+            .addTo(m);
+
+        // Keep the rest of the dashboard in sync
+        if (p.ward_id) selectWard(p);
+    });
+
+    // Emergency asset popup
+    m.on('click', 'assets-core', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        const p = e.features[0].properties;
+        new maplibregl.Popup({ closeButton: true, maxWidth: '240px' })
+            .setLngLat(e.lngLat)
+            .setHTML(`
+                <div style="background:#0f172a;color:#f8fafc;padding:10px;border:1px solid #334155;border-radius:8px;font-family:sans-serif;">
+                    <div style="font-weight:800;color:${p.color};">${p.icon} ${p.name}</div>
+                    <div style="font-size:11px;margin-top:4px;">Type: <b>${p.kind}</b></div>
+                    <div style="font-size:11px;">Capacity: <b>${p.cap}</b></div>
+                </div>`)
+            .addTo(m);
+    });
+}
+
+// Mode switching between 2D/3D/FLIR/SAT
+function setMapMode(mode) {
+    state.godsEye.mode = mode;
+
+    const btn2d = document.getElementById('ge-mode-2d');
+    const btn3d = document.getElementById('ge-mode-3d');
+    const btnThermal = document.getElementById('ge-mode-thermal');
+    const btnSat = document.getElementById('ge-mode-satellite');
+    [btn2d, btn3d, btnThermal, btnSat].forEach(b => b && b.classList.remove('active'));
+
+    const leafletEl = document.getElementById('map');
+    const geEl = document.getElementById('godsEyeMap');
+    const hud = document.getElementById('ge-hud');
+
+    const showLeaflet = (mode === '2d');
+    if (leafletEl) leafletEl.style.display = showLeaflet ? 'block' : 'none';
+    if (geEl) geEl.style.display = showLeaflet ? 'none' : 'block';
+    if (hud) hud.classList.toggle('hidden', showLeaflet);
+
+    if (showLeaflet) {
+        btn2d && btn2d.classList.add('active');
+        stopDronePatrol();
+        return;
+    }
+
+    // Lazy-init God's Eye map on first activation
+    if (!state.godsEye.map) initGodsEyeMap();
+    else state.godsEye.map.resize();
+
+    const city = CITIES[state.city] || CITIES.delhi;
+    const baseKey = godsEyeStyleKey(mode);
+    state.godsEye.map.setStyle(buildGodsEyeStyle(baseKey));
+
+    state.godsEye.map.once('styledata', () => {
+        state.godsEye.map.addSource('wards', { type: 'geojson', data: state.godsEye.lastGeoJSON || emptyFC() });
+        addGodsEyeLayers();
+        refreshGodsEyeData();
+        updateGodsEyeHUD();
+    });
+
+    // FLIR vs 3D camera treatment
+    const pitch = mode === 'thermal' ? 0 : 55;
+    state.godsEye.map.easeTo({
+        center: [city.center[1], city.center[0]],
+        pitch: pitch,
+        bearing: mode === 'thermal' ? 0 : state.godsEye.bearing,
+        zoom: city.zoom - 0.3,
+        duration: 1200
+    });
+
+    if (mode === '3d') { btn3d && btn3d.classList.add('active'); }
+    if (mode === 'thermal') { btnThermal && btnThermal.classList.add('active'); }
+    if (mode === 'satellite') { btnSat && btnSat.classList.add('active'); }
+}
+
+// UAV Patrol: auto-orbit city at God's Eye pitch
+function toggleDronePatrol() {
+    if (state.godsEye.patrolling) { stopDronePatrol(); return; }
+    if (state.godsEye.mode === '2d') setMapMode('3d');
+    state.godsEye.patrolling = true;
+    const btn = document.getElementById('ge-patrol-btn');
+    if (btn) btn.textContent = '⏸ UAV Patrol';
+    const step = () => {
+        if (!state.godsEye.patrolling || !state.godsEye.map) return;
+        state.godsEye.bearing = (state.godsEye.bearing + 0.35) % 360;
+        // Rotate in place — no interpolated zoom/center, so user pan/zoom stays free during patrol
+        state.godsEye.map.rotateTo(state.godsEye.bearing, { duration: 0 });
+        state.godsEye.patrolTimer = requestAnimationFrame(step);
+    };
+    step();
+}
+function stopDronePatrol() {
+    state.godsEye.patrolling = false;
+    if (state.godsEye.patrolTimer) cancelAnimationFrame(state.godsEye.patrolTimer);
+    state.godsEye.patrolTimer = null;
+    const btn = document.getElementById('ge-patrol-btn');
+    if (btn) btn.textContent = '▶ UAV Patrol';
+}
+
+// All-India macro overview: orbit camera out to see all 5 pilot cities
+function flyToIndiaOverview() {
+    if (state.godsEye.mode === '2d') setMapMode('3d');
+    if (!state.godsEye.map) return;
+    stopDronePatrol();
+    state.godsEye.map.flyTo({
+        center: [78.5, 22.5],   // centroid of pilot city cluster
+        zoom: 4.4,
+        pitch: 30,
+        bearing: 0,
+        duration: 2400
+    });
+}
+
+// Tactical HUD telemetry
+function updateGodsEyeHUD() {
+    const m = state.godsEye.map;
+    if (!m) return;
+    const c = m.getCenter();
+    const coords = document.getElementById('hud-coords');
+    const att = document.getElementById('hud-attitude');
+    const sty = document.getElementById('hud-style');
+    if (coords) coords.textContent = `LAT ${c.lat.toFixed(4)} / LON ${c.lng.toFixed(4)}`;
+    if (att) att.textContent = `PITCH ${m.getPitch().toFixed(0)}° / BRG ${((m.getBearing() + 360) % 360).toFixed(0)}° / Z ${m.getZoom().toFixed(1)}`;
+    if (sty) {
+        sty.textContent = `SENSOR: ${GODS_EYE_BASE_STYLES[godsEyeStyleKey(state.godsEye.mode)].label}`;
+    }
+}
+
+// ------------------------------------------------------------------------------
 // Global Application Bootstrap
-// -----------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
     initForecastChart();

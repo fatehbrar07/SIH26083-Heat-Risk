@@ -241,3 +241,26 @@ SIH Mandatory Mandate               Implemented Module              Evidence
 6. Actionable Civic Advisories  ──► backend/app/advisory/      ──► Bilingual NDMA Playbooks
 7. Zero False Clinical Claims   ──► docs/LIMITATIONS.md        ──► Relative Risk (0-100)
 ```
+
+---
+
+### 3. Real-World Free APIs & Zero-Synthetic Data Invariants
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                   100% REAL-WORLD SCIENTIFIC & OPEN DATA PIPELINES                │
+├────────────────────────────────┬─────────────────────────────────────────────────┤
+│ Atmospheric & Forecast Grid:   │ Open-Meteo High-Resolution 0.1° NWP (Keyless)   │
+│ Historical Baseline (40-Yr):   │ NASA POWER (LaRC MERRA-2 Climatology) (Keyless) │
+│ Socio-Demographics & Canopy:   │ Census of India 2011 PCA + Landsat (Open Gov)   │
+│ Real GPS Geolocation Detection:│ W3C Browser Geolocation API                     │
+│ Biometeorological Formulas:    │ WMO UTCI (Fiala 187-node) + ISO 7243:2017       │
+└────────────────────────────────┴─────────────────────────────────────────────────┘
+```
+
+1. **Zero Synthetic / Mock Ingestion**: Weather parameters (Air Temperature, Relative Humidity, Wind Speed, Solar Radiation) are ingested directly via the Open-Meteo Numerical Weather Prediction API (`api.open-meteo.com/v1/forecast`) with 5-day hourly resolution and downscaled to 1.2m human center.
+2. **Deterministic Scientific Indices**:
+   - **UTCI**: 6th-order polynomial with 59 terms approximating the Fiala 187-node human thermoregulation model.
+   - **ISO 7243 WBGT**: Stull natural wet-bulb temperature ($T_w$) and Liljegren solar globe temperature ($T_g$).
+   - **NOAA Steadman Heat Index**: Rothfusz 9-parameter multi-variable regression.
+3. **Live Geolocation & Real-Time Invariant**: The system allows immediate browser GPS detection (`navigator.geolocation`) to center the GIS choropleth and compute true live thermal stress for any user coordinate across India without mock dependencies.

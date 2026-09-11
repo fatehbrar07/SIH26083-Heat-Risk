@@ -1179,20 +1179,104 @@ async function fetchLiveForecast() {
     const lon = city.center[1];
 
     try {
-        const res = await fetch(`/api/v1/weather/current?lat=${lat}&lon=${lon}`);
+        // Direct call to Open-Meteo real-time WMO NWP API
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,direct_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,direct_radiation&wind_speed_unit=ms&forecast_days=5&timezone=auto`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const w = data.weather;
+        
+        const curr = data.current || {};
+        const temp = curr.temperature_2m || 38.0;
+        const rh = curr.relative_humidity_2m || 50.0;
+        const wind = curr.wind_speed_10m || 2.5;
+        const solar = curr.direct_radiation !== undefined ? curr.direct_radiation : 600.0;
 
-        document.getElementById('temp-slider').value = w.temperature_c;
-        document.getElementById('rh-slider').value = w.relative_humidity_pct;
-        document.getElementById('wind-slider').value = w.wind_speed_2m_ms || 2.5;
-        document.getElementById('solar-slider').value = w.solar_radiation_w_m2 || 650;
+        state.weather.temp_c = temp;
+        state.weather.rh_pct = rh;
+        state.weather.wind_speed_ms = wind;
+        state.weather.solar_radiation_w_m2 = solar;
+
+        const tSlider = document.getElementById('temp-slider');
+        const rhSlider = document.getElementById('rh-slider');
+        const windSlider = document.getElementById('wind-slider');
+        const solarSlider = document.getElementById('solar-slider');
+
+        if (tSlider) tSlider.value = temp;
+        if (rhSlider) rhSlider.value = rh;
+        if (windSlider) windSlider.value = wind;
+        if (solarSlider) solarSlider.value = solar;
+
         updateControls();
+        fetchForecastTrajectory();
+        
+        // Update sidebar timestamp to real live time
+        const tsEl = document.getElementById('sidebar-timestamp');
+        if (tsEl) {
+            const now = new Date();
+            tsEl.textContent = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ', ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' IST';
+        }
     } catch (err) {
-        console.warn("Live weather fetch failed, loading default summer spike:", err);
-        loadScenario('scenario_c_delhi_2024_heatwave');
+        console.warn("Direct Open-Meteo live weather fetch failed, using fallback:", err);
+        updateControls();
     }
+}
+
+// Real-world automatic browser geolocation detection
+async function detectUserLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,direct_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,direct_radiation&wind_speed_unit=ms&forecast_days=5&timezone=auto`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            
+            const curr = data.current || {};
+            const temp = curr.temperature_2m || 35.0;
+            const rh = curr.relative_humidity_2m || 50.0;
+            const wind = curr.wind_speed_10m || 2.0;
+            const solar = curr.direct_radiation !== undefined ? curr.direct_radiation : 500.0;
+
+            state.weather.temp_c = temp;
+            state.weather.rh_pct = rh;
+            state.weather.wind_speed_ms = wind;
+            state.weather.solar_radiation_w_m2 = solar;
+
+            const heroCity = document.getElementById('hero-city-name');
+            if (heroCity) heroCity.textContent = `Live GPS (${lat.toFixed(3)}°, ${lon.toFixed(3)}°)`;
+
+            const tSlider = document.getElementById('temp-slider');
+            const rhSlider = document.getElementById('rh-slider');
+            const windSlider = document.getElementById('wind-slider');
+            const solarSlider = document.getElementById('solar-slider');
+
+            if (tSlider) tSlider.value = temp;
+            if (rhSlider) rhSlider.value = rh;
+            if (windSlider) windSlider.value = wind;
+            if (solarSlider) solarSlider.value = solar;
+
+            if (state.map) {
+                state.map.setView([lat, lon], 12);
+                L.marker([lat, lon]).addTo(state.map)
+                    .bindPopup(`<b>Your Real Location</b><br>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>Temp: ${temp}°C, Humidity: ${rh}%`)
+                    .openPopup();
+            }
+
+            updateControls();
+            fetchForecastTrajectory();
+        } catch (err) {
+            alert(`Failed to fetch weather for GPS coordinates: ${err.message}`);
+        }
+    }, (err) => {
+        alert(`Location permission denied or unavailable: ${err.message}`);
+    });
 }
 
 // -----------------------------------------------------------------------------
@@ -2139,6 +2223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
     initForecastChart();
     initHindcast();
-    updateControls();
+    fetchLiveForecast();
     resetTimer();
 });

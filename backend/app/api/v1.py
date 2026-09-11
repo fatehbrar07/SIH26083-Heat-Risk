@@ -64,16 +64,22 @@ async def get_current_weather(
     lat: float = Query(default=28.6139, description="Latitude"),
     lon: float = Query(default=77.2090, description="Longitude")
 ):
-    """Retrieve current / baseline meteorological conditions from Open-Meteo & NASA POWER."""
-    forecast = await open_meteo_client.fetch_5day_forecast(lat=lat, lon=lon)
-    first_day = forecast["daily_forecasts"][0] if forecast.get("daily_forecasts") else {}
+    """Retrieve real-time live atmospheric observation from Open-Meteo & WMO standard."""
+    forecast = await open_meteo_client.fetch_live_weather(lat=lat, lon=lon)
+    curr = forecast.get("current", {})
     return {
         "coordinates": {"latitude": lat, "longitude": lon},
         "weather": {
-            "temperature_c": first_day.get("peak_temperature_c", 40.0),
-            "relative_humidity_pct": first_day.get("concurrent_rh_pct", 35.0),
-            "wind_speed_2m_ms": first_day.get("concurrent_wind_speed_ms", 2.5),
-            "solar_radiation_w_m2": first_day.get("concurrent_solar_radiation_w_m2", 650.0)
+            "temperature_c": curr.get("temperature_c", 30.0),
+            "apparent_temperature_c": curr.get("apparent_temperature_c", 30.0),
+            "relative_humidity_pct": curr.get("relative_humidity_pct", 50.0),
+            "wind_speed_2m_ms": curr.get("wind_speed_10m_ms", 2.0) * 0.75, # Logarithmic wind downscaling to 1.2m
+            "wind_speed_10m_ms": curr.get("wind_speed_10m_ms", 2.0),
+            "solar_radiation_w_m2": curr.get("solar_radiation_w_m2", 400.0),
+            "uv_index": curr.get("uv_index", 5.0),
+            "weather_code": curr.get("weather_code", 0),
+            "condition": curr.get("condition", "Clear"),
+            "condition_hi": curr.get("condition_hi", "साफ")
         },
         "provenance": forecast.get("provenance")
     }
@@ -142,7 +148,7 @@ async def get_thermal_forecast(
         hi = HeatIndexEngine.calculate_heat_index(t, rh)
 
         daily_projections.append({
-            "horizon": item["horizon_label"],
+            "horizon": item.get("horizon", item.get("horizon_label", "D+1")),
             "date": item["date"],
             "weather": {
                 "temperature_c": t,

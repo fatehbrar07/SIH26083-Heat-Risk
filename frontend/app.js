@@ -887,33 +887,49 @@ function updateWardInspectorUI(props) {
     const isHindi = state.language === 'hi';
 
     const wardNameEl = document.getElementById('inspector-ward-name');
+    const wardTypeEl = document.getElementById('inspector-ward-type');
     const hviEl = document.getElementById('inspector-hvi');
-    const workersEl = document.getElementById('inspector-workers');
-    const elderlyEl = document.getElementById('inspector-elderly');
-    const childrenEl = document.getElementById('inspector-children');
-    const densityEl = document.getElementById('inspector-density');
-    const actionEl = document.getElementById('inspector-action');
+    const popEl = document.getElementById('inspector-pop');
+    const slumEl = document.getElementById('inspector-slum');
+    const canopyEl = document.getElementById('inspector-canopy');
+    const riskBadgeEl = document.getElementById('inspector-risk-badge');
+    const actionsListEl = document.getElementById('inspector-actions');
 
     const wardName = isHindi ? (props.ward_name_hi || props.ward_name) : props.ward_name;
     if (wardNameEl) wardNameEl.textContent = `${wardName} (${props.ward_id})`;
-    if (hviEl) hviEl.textContent = `${props.hvi_score || 68.5} / 100`;
-    
-    const workerPct = props.pct_outdoor_workers || 35.0;
-    const elderlyPct = props.pct_elderly || 10.0;
-    const childPct = props.pct_children || 14.0;
-    const density = props.density_sqkm || 37000;
+    if (wardTypeEl) wardTypeEl.textContent = isHindi ? (props.description_hi || "उच्च घनत्व अनौपचारिक बस्ती, टिन की छतें, कम छाया") : (props.description || "High-density informal settlement, tin roofing, low canopy");
+    if (hviEl) hviEl.innerHTML = `${(props.hvi_score / 100 || 0.68).toFixed(2)} <span class="text-[10px] text-slate-500 font-normal">/ 1.0</span>`;
+    if (popEl) popEl.textContent = (props.population || 85000).toLocaleString();
+    if (slumEl) slumEl.textContent = `${props.pct_slum || 68} %`;
+    if (canopyEl) canopyEl.textContent = `${props.canopy_deficit || 91} %`;
 
-    if (workersEl) workersEl.textContent = `${workerPct}%`;
-    if (elderlyEl) elderlyEl.textContent = `${elderlyPct}%`;
-    if (childrenEl) childrenEl.textContent = `${childPct}%`;
-    if (densityEl) densityEl.textContent = `${density.toLocaleString()} / km²`;
+    if (riskBadgeEl) {
+        const score = state.thermalIndices.risk_score || 70;
+        const col = getRiskColor(score);
+        riskBadgeEl.textContent = score >= 80 ? "CRITICAL" : score >= 60 ? "HIGH RISK" : "MODERATE";
+        riskBadgeEl.style.color = col;
+        riskBadgeEl.style.backgroundColor = `${col}20`;
+        riskBadgeEl.style.borderColor = `${col}50`;
+    }
 
-    if (actionEl) {
-        if (isHindi) {
-            actionEl.textContent = props.action_priority_hi || "आपातकालीन पेयजल टैंकर तैनात करें और वातानुकूलित शेल्टर सक्रिय करें।";
-        } else {
-            actionEl.textContent = props.action_priority || "Deploy emergency water tankers and activate shaded cooling centers.";
-        }
+    if (actionsListEl) {
+        const p1 = props.action_priority || "Deploy 4 emergency water tankers to central market chowk.";
+        const p2 = "Activate Community Hall cooling shelter with misting fans.";
+        const p3 = "Mandatory labor cessation (11 AM–4 PM) at outdoor worksites.";
+        actionsListEl.innerHTML = `
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
+                <span class="text-red-400 mt-0.5">●</span>
+                <span>${p1}</span>
+            </li>
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
+                <span class="text-orange-400 mt-0.5">●</span>
+                <span>${p2}</span>
+            </li>
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
+                <span class="text-amber-400 mt-0.5">●</span>
+                <span>${p3}</span>
+            </li>
+        `;
     }
 }
 
@@ -1087,50 +1103,63 @@ function computeThermalMetrics() {
     state.thermalIndices = { utci, wbgt, heat_index: hi, risk_score: compRisk };
 
     // Update UTCI Card
-    const utciDisp = document.getElementById('utci-display');
-    const utciTag = document.getElementById('utci-tag');
-    if (utciDisp) utciDisp.textContent = utci.toFixed(1);
+    const utciDisp = document.getElementById('utci-value') || document.getElementById('utci-display');
+    const utciTag = document.getElementById('utci-badge') || document.getElementById('utci-tag');
+    if (utciDisp) utciDisp.textContent = utci.toFixed(1) + ' °C';
     if (utciTag) {
-        utciTag.textContent = isHindi ? utciMeta.category_hi : utciMeta.category;
-        utciTag.style.backgroundColor = `${utciMeta.color}20`;
+        utciTag.textContent = isHindi ? utciMeta.category_hi : utciMeta.category.toUpperCase();
+        utciTag.style.backgroundColor = utciMeta.color + '20';
         utciTag.style.color = utciMeta.color;
-        utciTag.style.borderColor = `${utciMeta.color}50`;
+        utciTag.style.borderColor = utciMeta.color + '50';
     }
 
+    // Update Hero UTCI
+    const heroUtci = document.getElementById('hero-utci-display');
+    if (heroUtci) heroUtci.innerHTML = utci.toFixed(1) + ' °C <span class="text-xs font-normal text-slate-400">UTCI</span>';
+
     // Update WBGT Card
-    const wbgtDisp = document.getElementById('wbgt-display');
-    const wbgtTag = document.getElementById('wbgt-tag');
-    if (wbgtDisp) wbgtDisp.textContent = wbgt.toFixed(1);
+    const wbgtDisp = document.getElementById('wbgt-value') || document.getElementById('wbgt-display');
+    const wbgtTag = document.getElementById('wbgt-badge') || document.getElementById('wbgt-tag');
+    if (wbgtDisp) wbgtDisp.textContent = wbgt.toFixed(1) + ' °C';
     if (wbgtTag) {
-        wbgtTag.textContent = isHindi ? wbgtMeta.category_hi : wbgtMeta.category;
-        wbgtTag.style.backgroundColor = `${wbgtMeta.color}20`;
+        wbgtTag.textContent = isHindi ? wbgtMeta.category_hi : wbgtMeta.category.toUpperCase();
+        wbgtTag.style.backgroundColor = wbgtMeta.color + '20';
         wbgtTag.style.color = wbgtMeta.color;
+        wbgtTag.style.borderColor = wbgtMeta.color + '50';
     }
 
     // Update Heat Index Card
-    const hiDisp = document.getElementById('hi-display');
-    const hiTag = document.getElementById('hi-tag');
-    if (hiDisp) hiDisp.textContent = hi.toFixed(1);
+    const hiDisp = document.getElementById('hi-value') || document.getElementById('hi-display');
+    const hiTag = document.getElementById('hi-badge') || document.getElementById('hi-tag');
+    if (hiDisp) hiDisp.textContent = hi.toFixed(1) + ' °C';
     if (hiTag) {
-        const hiCategory = hi >= 54 ? (isHindi ? "अत्यधिक खतरा" : "Extreme Danger") :
-            hi >= 41 ? (isHindi ? "खतरा" : "Danger") :
-                hi >= 32 ? (isHindi ? "अत्यधिक सावधानी" : "Extreme Caution") : (isHindi ? "सावधानी" : "Caution");
+        const hiCategory = hi >= 54 ? (isHindi ? "अत्यधिक खतरा" : "EXTREME DANGER") :
+            hi >= 41 ? (isHindi ? "खतरा" : "DANGER") :
+                hi >= 32 ? (isHindi ? "अत्यधिक सावधानी" : "EXTREME CAUTION") : (isHindi ? "सावधानी" : "CAUTION");
         hiTag.textContent = hiCategory;
         hiTag.style.backgroundColor = hi >= 41 ? '#ef444420' : '#eab30820';
         hiTag.style.color = hi >= 41 ? '#ef4444' : '#eab308';
+        hiTag.style.borderColor = hi >= 41 ? '#ef444450' : '#eab30850';
     }
 
     // Update Composite Risk Card
-    const riskDisp = document.getElementById('peak-risk-display');
-    const riskTag = document.getElementById('peak-risk-tag');
-    if (riskDisp) riskDisp.textContent = compRisk.toFixed(1);
+    const riskDisp = document.getElementById('risk-value') || document.getElementById('peak-risk-display');
+    const riskTag = document.getElementById('risk-badge') || document.getElementById('peak-risk-tag');
+    if (riskDisp) riskDisp.innerHTML = compRisk.toFixed(1) + ' <span class="text-sm font-normal text-slate-400">/ 100</span>';
     if (riskTag) {
-        const riskCategory = compRisk >= 80 ? (isHindi ? "अत्यधिक गंभीर आपातकाल" : "Critical Emergency") :
-            compRisk >= 60 ? (isHindi ? "उच्च जोखिम चेतावनी" : "High Risk Alert") :
-                compRisk >= 30 ? (isHindi ? "मध्यम जोखिम" : "Moderate Risk") : (isHindi ? "कम जोखिम" : "Low Risk");
+        const riskCategory = compRisk >= 80 ? (isHindi ? "अत्यधिक गंभीर आपातकाल" : "CRITICAL") :
+            compRisk >= 60 ? (isHindi ? "उच्च जोखिम चेतावनी" : "HIGH RISK") :
+                compRisk >= 30 ? (isHindi ? "मध्यम जोखिम" : "MODERATE") : (isHindi ? "कम जोखिम" : "LOW RISK");
         riskTag.textContent = riskCategory;
-        riskTag.style.color = getRiskColor(compRisk);
+        const col = getRiskColor(compRisk);
+        riskTag.style.backgroundColor = col + '20';
+        riskTag.style.color = col;
+        riskTag.style.borderColor = col + '50';
     }
+
+    // Update Hero Risk
+    const heroRisk = document.getElementById('hero-risk-score');
+    if (heroRisk) heroRisk.innerHTML = compRisk.toFixed(1) + ' <span class="text-xs font-normal text-slate-400">/ 100</span>';
 }
 
 // -----------------------------------------------------------------------------

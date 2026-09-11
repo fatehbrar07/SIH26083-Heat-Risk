@@ -39,7 +39,8 @@ def build_official_filled_sih_deck():
     SIH_LOGO_PATH = "/tmp/sih_logo_extracted.png"
     HEX_GRAPHIC_PATH = "/tmp/sih_hex_graphic.png"
     DIAGRAM_S2_PATH = "/tmp/sih_assets/slide2_flowchart.png"
-    DIAGRAM_S3_PATH = "/tmp/sih_assets/slide3_gis_curves.png"
+    GODS_EYE_SCREENSHOT = "/home/ubuntu/sih26083-heat-risk/docs/assets/gods-eye-c2.png"
+    DIAGRAM_S3_PATH = GODS_EYE_SCREENSHOT if os.path.exists(GODS_EYE_SCREENSHOT) else "/tmp/sih_assets/slide3_gis_curves.png"
     DIAGRAM_S5_PATH = "/tmp/sih_assets/slide5_timeline.png"
 
     def set_white_bg(slide):
@@ -348,7 +349,7 @@ def build_official_filled_sih_deck():
         ("1. Ingestion:", "Open-Meteo 0.1° NWP 5-day hourly weather + NASA POWER 40-yr baseline + Census 2011 PCA demographics."),
         ("2. Thermal Engine:", "UTCI 6th-order polynomial (Fiala) + ISO 7243 WBGT psychrometrics + Multi-day persistence penalty (Dmult)."),
         ("3. AI & HVI Synthesis:", "PCA Demographic Vulnerability Index (slums, elderly, gig labor, canopy deficit) → 0–100 Heat-Health Score."),
-        ("4. Automated Action:", "Interactive Leaflet GIS map, 25 REST APIs, NDMA playbooks, hospital cooling beds, NIOSH labor halts.")
+        ("4. God's Eye C2 & Action:", "Tactical 3D Command View (MapLibre), 25 REST APIs, NDMA playbooks, hospital cooling beds, NIOSH labor halts.")
     ]
     for s_head, s_body in steps_data:
         p_s = tf_cs.add_paragraph()
@@ -385,7 +386,7 @@ def build_official_filled_sih_deck():
     tech_categories = [
         ("Backend & REST APIs:", "Python 3.11, FastAPI, Pydantic v2, Uvicorn, AsyncIO (25 REST production endpoints)"),
         ("Biometeorology & GIS Engine:", "NumPy, Pandas, GeoPandas, Shapely, Scipy (UTCI 6th-order polynomial & ISO 7243 psychrometrics)"),
-        ("Web GIS & Visualization:", "Leaflet.js (Choropleth GIS), Chart.js (5-Day Trend Curves), HTML5/CSS3 Responsive UI"),
+        ("Web GIS & Tactical 3D C2:", "MapLibre GL JS (God's Eye 3D C2 War Room), Leaflet.js (2D Choropleth), Chart.js (5-Day Trend Curves)"),
         ("Data Ingestion & Deployment:", "Open-Meteo NWP, NASA POWER MERRA-2, Census India PCA, Docker, Linux VPS (Oracle Linux)")
     ]
 

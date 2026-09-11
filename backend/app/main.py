@@ -29,7 +29,7 @@ app.add_middleware(
 app.include_router(api_v1_router)
 
 # Mount frontend static directory if exists
-frontend_path = os.path.join(os.path.dirname(__file__), "../../../frontend")
+frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend"))
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 

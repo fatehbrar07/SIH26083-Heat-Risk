@@ -13,7 +13,7 @@ const state = {
     activeWardData: null,
     weather: {
         temp_c: 40.0,
-        rh_pct: 35.0,
+        rh_pct: 76.0,
         wind_speed_ms: 2.5,
         solar_radiation_w_m2: 650.0,
         consecutive_extreme_days: 1
@@ -757,7 +757,7 @@ function initMap() {
         attributionControl: false
     }).setView(currentCity.center, currentCity.zoom);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
         subdomains: 'abcd'
     }).addTo(state.map);
@@ -1066,21 +1066,32 @@ function updateControls() {
     const windInput = document.getElementById('wind-slider');
     const solarInput = document.getElementById('solar-slider');
 
-    state.weather.temp_c = parseFloat(tempInput.value);
-    state.weather.rh_pct = parseFloat(rhInput.value);
-    state.weather.wind_speed_ms = parseFloat(windInput.value);
-    state.weather.solar_radiation_w_m2 = parseFloat(solarInput.value);
+    if (tempInput) state.weather.temp_c = parseFloat(tempInput.value);
+    if (rhInput) state.weather.rh_pct = parseFloat(rhInput.value);
+    if (windInput) state.weather.wind_speed_ms = parseFloat(windInput.value);
+    if (solarInput) state.weather.solar_radiation_w_m2 = parseFloat(solarInput.value);
 
-    // Update numeric readout displays
-    document.getElementById('temp-val').textContent = `${state.weather.temp_c.toFixed(1)} °C`;
-    document.getElementById('rh-val').textContent = `${state.weather.rh_pct.toFixed(1)} %`;
-    document.getElementById('wind-val').textContent = `${state.weather.wind_speed_ms.toFixed(1)} m/s`;
-    document.getElementById('solar-val').textContent = `${state.weather.solar_radiation_w_m2} W/m²`;
+    // Update slider values
+    const tempVal = document.getElementById('temp-val');
+    const rhVal = document.getElementById('rh-val');
+    const windVal = document.getElementById('wind-val');
+    const solarVal = document.getElementById('solar-val');
+
+    if (tempVal) tempVal.textContent = `${state.weather.temp_c.toFixed(1)} °C`;
+    if (rhVal) rhVal.textContent = `${state.weather.rh_pct.toFixed(1)} %`;
+    if (windVal) windVal.textContent = `${state.weather.wind_speed_ms.toFixed(1)} m/s`;
+    if (solarVal) solarVal.textContent = `${state.weather.solar_radiation_w_m2} W/m²`;
+
+    // Update top 4 weather cards
+    const mTemp = document.getElementById('metric-temp-val');
+    const mRh = document.getElementById('metric-rh-val');
+    const mWind = document.getElementById('metric-wind-val');
+    if (mTemp) mTemp.textContent = `${state.weather.temp_c.toFixed(1)} °C`;
+    if (mRh) mRh.textContent = `${state.weather.rh_pct.toFixed(0)} %`;
+    if (mWind) mWind.textContent = `${state.weather.wind_speed_ms.toFixed(1)} m/s`;
 
     computeThermalMetrics();
     fetchCityRiskGeoJSON();
-    updateOccupationalSafety();
-    updateAdvisories();
 }
 
 function computeThermalMetrics() {
@@ -1102,64 +1113,48 @@ function computeThermalMetrics() {
 
     state.thermalIndices = { utci, wbgt, heat_index: hi, risk_score: compRisk };
 
-    // Update UTCI Card
-    const utciDisp = document.getElementById('utci-value') || document.getElementById('utci-display');
-    const utciTag = document.getElementById('utci-badge') || document.getElementById('utci-tag');
-    if (utciDisp) utciDisp.textContent = utci.toFixed(1) + ' °C';
-    if (utciTag) {
-        utciTag.textContent = isHindi ? utciMeta.category_hi : utciMeta.category.toUpperCase();
-        utciTag.style.backgroundColor = utciMeta.color + '20';
-        utciTag.style.color = utciMeta.color;
-        utciTag.style.borderColor = utciMeta.color + '50';
-    }
-
-    // Update Hero UTCI
+    // Update Hero Callout
     const heroUtci = document.getElementById('hero-utci-display');
-    if (heroUtci) heroUtci.innerHTML = utci.toFixed(1) + ' °C <span class="text-xs font-normal text-slate-400">UTCI</span>';
+    const heroBadge = document.getElementById('hero-utci-badge');
+    const heroAlert = document.getElementById('hero-alert-level');
+    const heroCity = document.getElementById('hero-city-name');
+    const cityInfo = CITIES[state.city] || CITIES.delhi;
 
-    // Update WBGT Card
-    const wbgtDisp = document.getElementById('wbgt-value') || document.getElementById('wbgt-display');
-    const wbgtTag = document.getElementById('wbgt-badge') || document.getElementById('wbgt-tag');
-    if (wbgtDisp) wbgtDisp.textContent = wbgt.toFixed(1) + ' °C';
-    if (wbgtTag) {
-        wbgtTag.textContent = isHindi ? wbgtMeta.category_hi : wbgtMeta.category.toUpperCase();
-        wbgtTag.style.backgroundColor = wbgtMeta.color + '20';
-        wbgtTag.style.color = wbgtMeta.color;
-        wbgtTag.style.borderColor = wbgtMeta.color + '50';
+    if (heroCity) heroCity.textContent = isHindi ? (cityInfo.name_hi || cityInfo.name) : cityInfo.name;
+    if (heroUtci) heroUtci.textContent = `${utci.toFixed(1)} °C`;
+    
+    if (heroBadge) {
+        if (utci >= 46) {
+            heroBadge.textContent = isHindi ? "अत्यधिक गंभीर" : "Extreme Danger";
+            heroBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700";
+        } else if (utci >= 38) {
+            heroBadge.textContent = isHindi ? "गंभीर तनाव" : "Dangerous";
+            heroBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700";
+        } else if (utci >= 32) {
+            heroBadge.textContent = isHindi ? "मध्यम तनाव" : "Moderate Risk";
+            heroBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800";
+        } else {
+            heroBadge.textContent = isHindi ? "सामान्य" : "Low Risk";
+            heroBadge.className = "inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700";
+        }
     }
 
-    // Update Heat Index Card
-    const hiDisp = document.getElementById('hi-value') || document.getElementById('hi-display');
-    const hiTag = document.getElementById('hi-badge') || document.getElementById('hi-tag');
-    if (hiDisp) hiDisp.textContent = hi.toFixed(1) + ' °C';
-    if (hiTag) {
-        const hiCategory = hi >= 54 ? (isHindi ? "अत्यधिक खतरा" : "EXTREME DANGER") :
-            hi >= 41 ? (isHindi ? "खतरा" : "DANGER") :
-                hi >= 32 ? (isHindi ? "अत्यधिक सावधानी" : "EXTREME CAUTION") : (isHindi ? "सावधानी" : "CAUTION");
-        hiTag.textContent = hiCategory;
-        hiTag.style.backgroundColor = hi >= 41 ? '#ef444420' : '#eab30820';
-        hiTag.style.color = hi >= 41 ? '#ef4444' : '#eab308';
-        hiTag.style.borderColor = hi >= 41 ? '#ef444450' : '#eab30850';
+    if (heroAlert) {
+        if (compRisk >= 75) {
+            heroAlert.textContent = isHindi ? "अत्यधिक जोखिम" : "Extreme Heat Risk";
+            heroAlert.className = "text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold";
+        } else if (compRisk >= 60) {
+            heroAlert.textContent = isHindi ? "उच्च जोखिम" : "High Heat Risk";
+            heroAlert.className = "text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-700 font-bold";
+        } else {
+            heroAlert.textContent = isHindi ? "सामान्य स्थिति" : "Moderate Heat Risk";
+            heroAlert.className = "text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-bold";
+        }
     }
 
-    // Update Composite Risk Card
-    const riskDisp = document.getElementById('risk-value') || document.getElementById('peak-risk-display');
-    const riskTag = document.getElementById('risk-badge') || document.getElementById('peak-risk-tag');
-    if (riskDisp) riskDisp.innerHTML = compRisk.toFixed(1) + ' <span class="text-sm font-normal text-slate-400">/ 100</span>';
-    if (riskTag) {
-        const riskCategory = compRisk >= 80 ? (isHindi ? "अत्यधिक गंभीर आपातकाल" : "CRITICAL") :
-            compRisk >= 60 ? (isHindi ? "उच्च जोखिम चेतावनी" : "HIGH RISK") :
-                compRisk >= 30 ? (isHindi ? "मध्यम जोखिम" : "MODERATE") : (isHindi ? "कम जोखिम" : "LOW RISK");
-        riskTag.textContent = riskCategory;
-        const col = getRiskColor(compRisk);
-        riskTag.style.backgroundColor = col + '20';
-        riskTag.style.color = col;
-        riskTag.style.borderColor = col + '50';
-    }
-
-    // Update Hero Risk
-    const heroRisk = document.getElementById('hero-risk-score');
-    if (heroRisk) heroRisk.innerHTML = compRisk.toFixed(1) + ' <span class="text-xs font-normal text-slate-400">/ 100</span>';
+    // Update Overall Risk Metric
+    const mRisk = document.getElementById('metric-risk-val');
+    if (mRisk) mRisk.textContent = `${compRisk.toFixed(1)} / 100`;
 }
 
 // -----------------------------------------------------------------------------

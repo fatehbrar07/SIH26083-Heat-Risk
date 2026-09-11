@@ -1,63 +1,45 @@
 <!DOCTYPE html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIH26083 — Extreme Heatwave Early Warning & Human Thermal Stress OS</title>
+    <title>ORION / SIH26083 — Heatwave Early Warning System</title>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+                        sans: ['"Inter"', '"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
                         mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
                         brand: {
-                            50: '#f0f7ff',
-                            100: '#e0effe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            900: '#0c4a6e',
-                            navy: '#0b132b',
-                            deep: '#070b19'
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
                         },
-                        hazard: {
-                            low: '#10b981',
-                            mod: '#eab308',
-                            high: '#f97316',
-                            vhigh: '#ef4444',
-                            critical: '#991b1b',
-                            extreme: '#7f1d1d'
-                        }
-                    },
-                    animation: {
-                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'radar-sweep': 'radarSweep 4s linear infinite',
-                        'float-slow': 'floatSlow 6s ease-in-out infinite',
-                        'shimmer': 'shimmer 2.5s infinite',
-                    },
-                    keyframes: {
-                        pulseGlow: {
-                            '0%, 100%': { opacity: '1', transform: 'scale(1)', filter: 'drop-shadow(0 0 12px rgba(239, 68, 68, 0.6))' },
-                            '50%': { opacity: '0.85', transform: 'scale(1.02)', filter: 'drop-shadow(0 0 24px rgba(239, 68, 68, 0.9))' },
+                        navy: {
+                            800: '#1e293b',
+                            900: '#0f172a',
                         },
-                        floatSlow: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-6px)' },
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '-200% 0' },
-                            '100%': { backgroundPosition: '200% 0' }
+                        risk: {
+                            low: '#16a34a',
+                            moderate: '#ca8a04',
+                            high: '#ea580c',
+                            extreme: '#dc2626',
                         }
                     }
                 }
@@ -75,976 +57,651 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- MapLibre GL JS (God's Eye 3D C2 Engine) -->
+    <!-- MapLibre GL JS (God's Eye 3D Engine) -->
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
     <style>
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #070b19; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
 
         /* Map styling */
-        #map { height: 500px; border-radius: 1rem; z-index: 10; width: 100%; }
-        #godsEyeMap { height: 500px; border-radius: 1rem; z-index: 10; display: none; width: 100%; }
+        #map { height: 420px; border-radius: 0.75rem; z-index: 10; width: 100%; }
+        #godsEyeMap { height: 420px; border-radius: 0.75rem; z-index: 10; display: none; width: 100%; }
         
-        .hud-glow { 
-            text-shadow: 0 0 8px rgba(34, 211, 238, 0.8), 0 0 16px rgba(6, 182, 212, 0.4); 
-            font-family: 'JetBrains Mono', monospace; 
-        }
-
-        .hud-alert-glow {
-            text-shadow: 0 0 10px rgba(239, 68, 68, 0.9), 0 0 20px rgba(220, 38, 38, 0.6);
-        }
-
         .ge-mode-btn.active {
-            background: linear-gradient(135deg, rgba(8, 145, 178, 0.4) 0%, rgba(2, 132, 199, 0.3) 100%) !important;
-            color: #67e8f9 !important;
-            border-color: #06b6d4 !important;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            border-color: #1d4ed8 !important;
         }
 
-        /* Glassmorphism Styles */
-        .glass-panel {
-            background: rgba(13, 19, 36, 0.78);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .glass-panel-accent {
-            background: linear-gradient(135deg, rgba(17, 24, 49, 0.85) 0%, rgba(13, 19, 36, 0.75) 100%);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(56, 189, 248, 0.15);
-        }
-
-        .glass-card {
-            background: rgba(17, 24, 49, 0.65);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255, 255, 255, 0.14);
-            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Tactical HUD Grid Overlay */
-        .tactical-grid {
-            background-size: 32px 32px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        }
-
-        /* Leaflet Dark Custom Theme */
+        /* Clean Popups */
         .leaflet-popup-content-wrapper {
-            background: rgba(15, 23, 42, 0.95) !important;
-            color: #f8fafc !important;
-            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
             border-radius: 0.75rem !important;
-            box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.7) !important;
-            backdrop-filter: blur(12px) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+            font-family: 'Inter', sans-serif !important;
         }
-        .leaflet-popup-tip { background: #0f172a !important; }
-        .leaflet-container { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .leaflet-popup-tip { background: #ffffff !important; }
 
         /* Custom Range Slider */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
+            height: 18px;
+            width: 18px;
             border-radius: 50%;
-            background: #38bdf8;
+            background: #2563eb;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
             border: 2px solid #ffffff;
-            transition: all 0.15s ease;
-        }
-        input[type=range]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
-            box-shadow: 0 0 16px rgba(56, 189, 248, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
 
         /* Active Navigation Tab */
-        .nav-tab.active {
-            background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.1) 100%);
-            color: #38bdf8;
-            border-left: 3px solid #38bdf8;
-            box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.1);
+        .nav-item.active {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
         }
-
-        /* Shimmer Banner */
-        .shimmer-bg {
-            background: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.3) 50%, rgba(239, 68, 68, 0.15) 100%);
-            background-size: 200% 100%;
-            animation: shimmer 3s infinite;
+        .nav-item.active svg {
+            color: #2563eb;
         }
     </style>
 </head>
-<body class="bg-[#070b19] text-slate-100 font-sans antialiased min-h-screen flex flex-col tactical-grid selection:bg-cyan-500/30 selection:text-cyan-200">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-900">
 
     <!-- TOP HEADER -->
-    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3.5 transition-all">
-        <div class="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-4">
+    <header class="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 lg:px-8 py-3 shadow-sm">
+        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
             
             <!-- Left Branding -->
-            <div class="flex items-center space-x-3.5">
-                <div class="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 p-[1px] shadow-lg shadow-orange-500/20">
-                    <div class="w-full h-full bg-[#0b132b] rounded-[11px] flex items-center justify-center">
-                        <i data-lucide="flame" class="w-6 h-6 text-orange-400"></i>
-                    </div>
-                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-500 text-white shadow-sm">
+                    <i data-lucide="sun" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <div class="flex items-center space-x-2">
-                        <span class="font-mono font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300 text-sm tracking-wider">SIH26083</span>
-                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-800/80 text-cyan-300 font-semibold border border-cyan-500/30 font-mono" id="badge-os-version">v1.2 Pilot</span>
-                        <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>
-                            STAGE-4 RED ALERT
-                        </span>
+                        <span class="font-bold text-slate-900 text-base">ORION</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">SIH26083</span>
+                        <span class="text-xs text-slate-500 font-medium hidden sm:inline">• Heatwave Early Warning System</span>
                     </div>
-                    <h1 class="text-base sm:text-lg font-black text-white tracking-tight leading-tight" data-i18n="app_title">
-                        Extreme Heatwave Early Warning & Human Thermal Stress OS
-                    </h1>
-                    <p class="text-[11px] text-slate-400 font-medium hidden md:block" data-i18n="app_subtitle">
-                        MoES / NCMRWF | "What weather DOES to human health" — 3–5 Day Predictive Anticipation
+                    <p class="text-xs text-slate-500 font-medium">
+                        Safer People. Cooler Cities. <span class="hidden md:inline">| MoES • NCMRWF • NDMA</span>
                     </p>
                 </div>
             </div>
 
-            <!-- Header Quick Actions & Telemetry Controls -->
-            <div class="flex items-center flex-wrap gap-2.5 text-xs">
+            <!-- Header Controls: Location Selector + Live Badge + Language + API Docs -->
+            <div class="flex items-center flex-wrap gap-3 text-xs">
                 
-                <!-- City Selector Pill -->
-                <div class="flex items-center bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 shadow-inner focus-within:border-cyan-500 transition">
-                    <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400 mr-2"></i>
+                <!-- Location Dropdown -->
+                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus-within:border-blue-500 transition">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 mr-2"></i>
                     <label for="city-selector" class="sr-only">City</label>
-                    <select id="city-selector" onchange="onCityChange(this.value)" class="bg-transparent text-white font-semibold text-xs focus:outline-none cursor-pointer pr-1">
-                        <option value="delhi" class="bg-slate-900 text-slate-100">Delhi NCR (Pilot)</option>
-                        <option value="ahmedabad" class="bg-slate-900 text-slate-100">Ahmedabad, Gujarat</option>
-                        <option value="surat" class="bg-slate-900 text-slate-100">Surat, Gujarat</option>
-                        <option value="bhubaneswar" class="bg-slate-900 text-slate-100">Bhubaneswar, Odisha</option>
-                        <option value="mumbai" class="bg-slate-900 text-slate-100">Mumbai, Maharashtra</option>
+                    <select id="city-selector" onchange="onCityChange(this.value)" class="bg-transparent text-slate-800 font-semibold text-xs focus:outline-none cursor-pointer pr-1">
+                        <option value="delhi">Delhi NCR (Pilot)</option>
+                        <option value="ahmedabad">Ahmedabad, Gujarat</option>
+                        <option value="surat">Surat, Gujarat</option>
+                        <option value="bhubaneswar">Bhubaneswar, Odisha</option>
+                        <option value="mumbai">Mumbai, Maharashtra</option>
                     </select>
                 </div>
 
-                <!-- Live Stream Status Indicator -->
-                <div class="flex items-center space-x-2 px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 shadow-sm">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span class="font-bold text-[11px] font-mono tracking-wide" data-i18n="live_stream_badge">Tier-1 Live Data</span>
+                <!-- Live Status Indicator -->
+                <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span data-i18n="live_status">Live Data</span>
                 </div>
 
                 <!-- Language Toggle Group -->
-                <div class="flex items-center bg-slate-900/90 border border-slate-700/80 rounded-xl p-1 shadow-inner">
-                    <button id="lang-en-btn" onclick="setLanguage('en')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow">EN</button>
-                    <button id="lang-hi-btn" onclick="setLanguage('hi')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-white">हिंदी</button>
+                <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5">
+                    <button id="lang-en-btn" onclick="setLanguage('en')" class="px-2.5 py-1 rounded text-xs font-bold transition bg-white text-blue-700 shadow-sm">EN</button>
+                    <button id="lang-hi-btn" onclick="setLanguage('hi')" class="px-2.5 py-1 rounded text-xs font-semibold transition text-slate-600 hover:text-slate-900">हिंदी</button>
                 </div>
 
-                <!-- Voice Alert / Audio Readout -->
-                <button onclick="playAudioBriefing()" id="btn-audio-briefing" class="p-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 hover:text-cyan-400 transition shadow-sm" title="Audio Situational Briefing">
-                    <i data-lucide="volume-2" class="w-4 h-4"></i>
-                </button>
-
                 <!-- API Docs Button -->
-                <a href="/docs" target="_blank" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl font-bold transition border border-slate-700 flex items-center space-x-1.5 shadow-sm">
-                    <span data-i18n="api_docs_btn">API Docs</span>
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <a href="/docs" target="_blank" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-semibold transition border border-slate-200 flex items-center space-x-1.5 shadow-sm">
+                    <span data-i18n="api_docs">API Docs</span>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- MAIN WRAPPER WITH SIDEBAR NAVIGATION -->
-    <div class="max-w-[1720px] w-full mx-auto px-4 lg:px-8 py-6 flex-1 flex flex-col lg:flex-row gap-6">
+    <!-- MAIN DASHBOARD LAYOUT (SIDEBAR + MAIN CANVAS) -->
+    <div class="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-6 flex-1 flex flex-col lg:flex-row gap-6">
         
-        <!-- SIDEBAR NAVIGATION RAIL -->
-        <aside class="w-full lg:w-64 shrink-0 flex flex-col space-y-4">
-            
-            <!-- Navigation Menu -->
-            <nav class="glass-panel rounded-2xl p-3 border border-slate-800 space-y-1 shadow-xl sticky top-24">
-                <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 font-mono">
-                    Command Console
+        <!-- LEFT NAVIGATION SIDEBAR -->
+        <aside class="w-full lg:w-56 shrink-0">
+            <div class="bg-white rounded-xl border border-slate-200 p-2 shadow-sm sticky top-20 flex flex-col justify-between">
+                <nav class="space-y-1">
+                    <a href="#section-hero" class="nav-item active flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="home" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_home">Home</span>
+                    </a>
+                    <a href="#section-forecast" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_forecast">Forecast</span>
+                    </a>
+                    <a href="#section-map" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="map" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_map">Heat Map</span>
+                    </a>
+                    <a href="#section-vulnerable" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_vulnerable">People at Risk</span>
+                    </a>
+                    <a href="#section-safety" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="shield" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_safety">Safety Advice</span>
+                    </a>
+                    <a href="#section-workers" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_workers">Worker Safety</span>
+                    </a>
+                    <a href="#section-authorities" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="building-2" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_authorities">Advice for Authorities</span>
+                    </a>
+                    <a href="#section-hindcast" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_hindcast">Past Heatwaves</span>
+                    </a>
+                    <a href="#section-sources" class="nav-item flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        <i data-lucide="database" class="w-4 h-4 text-slate-400"></i>
+                        <span data-i18n="nav_sources">Data Sources</span>
+                    </a>
+                </nav>
+
+                <div class="pt-4 mt-4 border-t border-slate-100 text-[11px] text-slate-500 px-2 space-y-1">
+                    <div class="flex items-center space-x-1.5 text-emerald-600 font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>System Online</span>
+                    </div>
+                    <div>Updated: <span id="sidebar-timestamp" class="font-medium text-slate-700">10 Sep, 14:30 IST</span></div>
+                    <div class="text-[10px] text-slate-400 pt-1">© 2026 ORION / MoES</div>
                 </div>
-                
-                <a href="#section-hero" class="nav-tab active flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition">
-                    <i data-lucide="activity" class="w-4 h-4"></i>
-                    <span>Live Situation HUD</span>
-                </a>
-
-                <a href="#section-map" class="nav-tab flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
-                    <i data-lucide="map" class="w-4 h-4"></i>
-                    <span>God's Eye 3D C2 Map</span>
-                </a>
-
-                <a href="#section-forecast" class="nav-tab flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
-                    <i data-lucide="trending-up" class="w-4 h-4"></i>
-                    <span>5-Day Predictive Curves</span>
-                </a>
-
-                <a href="#section-occupational" class="nav-tab flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
-                    <i data-lucide="timer" class="w-4 h-4"></i>
-                    <span>NIOSH Work-Rest Clock</span>
-                </a>
-
-                <a href="#section-hindcast" class="nav-tab flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
-                    <i data-lucide="history" class="w-4 h-4"></i>
-                    <span>Hindcast Time-Machine</span>
-                </a>
-
-                <a href="#section-advisories" class="nav-tab flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
-                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                    <span>Action Playbooks</span>
-                </a>
-
-                <div class="pt-3 border-t border-slate-800/80 my-2"></div>
-
-                <!-- Emergency Dispatch Quick Trigger -->
-                <div class="bg-red-950/40 border border-red-500/30 rounded-xl p-3 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-red-400 font-mono">AUTOMATED DISPATCH</span>
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </span>
-                    </div>
-                    <p class="text-[11px] text-slate-300 leading-tight">
-                        Stage-4 Alert active for <strong class="text-white">Ward A & D</strong>. Auto-routing cooling vans.
-                    </p>
-                    <button onclick="simulateEmergencyBroadcast()" class="w-full py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 shadow-md shadow-red-900/40">
-                        <i data-lucide="radio" class="w-3.5 h-3.5 mr-1"></i>
-                        <span>Broadcast Trigger</span>
-                    </button>
-                </div>
-
-                <!-- System Telemetry Health Badge -->
-                <div class="px-3 py-2 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[10px] font-mono text-slate-400 space-y-1">
-                    <div class="flex justify-between">
-                        <span>LATENCY</span>
-                        <span class="text-emerald-400 font-bold">18 ms (FASTAPI)</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>ALGO VER</span>
-                        <span class="text-cyan-400 font-bold">UTCI-187 / ISO7243</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>POP AT RISK</span>
-                        <span class="text-orange-400 font-bold" id="sidebar-pop-at-risk">384,200</span>
-                    </div>
-                </div>
-            </nav>
+            </div>
         </aside>
 
-        <!-- MAIN CONTENT WORKSPACE CANVAS -->
+        <!-- MAIN CONTENT CANVAS -->
         <main class="flex-1 flex flex-col space-y-6 min-w-0">
 
-            <!-- HERO SITUATION BANNER & OPERATIONAL PARADIGM SHIFT -->
-            <section id="section-hero" class="relative overflow-hidden rounded-2xl border border-red-500/40 p-5 sm:p-6 shadow-2xl glass-panel-accent">
-                <!-- Background Accent Flare -->
-                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="absolute -left-20 -top-20 w-80 h-80 bg-orange-600/10 rounded-full blur-3xl pointer-events-none"></div>
-                
-                <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                    
-                    <!-- Left Alert Content -->
-                    <div class="space-y-2.5 max-w-3xl">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="px-2.5 py-1 rounded-lg bg-red-600 text-white font-mono font-extrabold text-xs tracking-wider animate-pulse flex items-center space-x-1.5 shadow-md shadow-red-900/50">
-                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-                                <span>CRITICAL STAGE-4 HEAT EMERGENCY</span>
-                            </span>
-                            <span class="px-2.5 py-1 rounded-lg bg-slate-800/90 text-cyan-300 font-mono text-xs border border-slate-700">
-                                WMO / NDMA COMPLIANT
-                            </span>
-                            <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 font-mono text-xs border border-amber-500/30">
-                                72h LEAD TIME
-                            </span>
-                        </div>
-
-                        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                            <span>High Thermal Strain Surge Detected in High-Density Informal Wards</span>
-                        </h2>
-
-                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-                            Translating dry-bulb weather into physiological thermal strain (<strong class="text-cyan-300">UTCI & ISO 7243 WBGT</strong>) multiplied by demographic vulnerability (<strong class="text-orange-300">HVI Slum & Outdoor Worker Density</strong>) for targeted municipal intervention.
-                        </p>
-
-                        <!-- Paradigm Shift Pill Tag -->
-                        <div class="flex flex-wrap items-center gap-2 text-[11px] pt-1">
-                            <span class="text-slate-400 font-medium">Paradigm Shift:</span>
-                            <span class="bg-slate-900/80 border border-slate-700/80 px-2.5 py-0.5 rounded-md text-slate-200">
-                                ❌ Ambient 40°C Only
-                            </span>
-                            <span class="text-slate-400">➔</span>
-                            <span class="bg-cyan-950/60 border border-cyan-500/40 px-2.5 py-0.5 rounded-md text-cyan-300 font-bold">
-                                 Evaporative Failure & 3D Extrusion
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Right Quick Metric Badge Block -->
-                    <div class="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-72">
-                        <div class="bg-slate-950/80 border border-red-500/30 rounded-xl p-3.5 shadow-inner flex items-center justify-between">
-                            <div>
-                                <div class="text-[10px] font-mono text-slate-400 uppercase">Composite Peak Risk</div>
-                                <div class="text-2xl font-black text-red-400 font-mono" id="hero-risk-score">70.9 <span class="text-xs font-normal text-slate-400">/ 100</span></div>
-                            </div>
-                            <div class="text-right">
-                                <span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono font-bold text-[10px] border border-red-500/40">RED ALERT</span>
-                                <div class="text-[10px] text-slate-400 mt-1">Ward A (Slum Hub)</div>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 shadow-inner flex items-center justify-between">
-                            <div>
-                                <div class="text-[10px] font-mono text-slate-400 uppercase">Physiological Strain</div>
-                                <div class="text-xl font-black text-orange-400 font-mono" id="hero-utci-display">43.4 °C <span class="text-xs font-normal text-slate-400">UTCI</span></div>
-                            </div>
-                            <div class="text-right">
-                                <span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 font-mono font-bold text-[10px]">VERY STRONG</span>
-                                <div class="text-[10px] text-slate-400 mt-1">Sweat Breakdown</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- INTERACTIVE SCENARIO & STRESS SANDBOX -->
-            <section class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4 shadow-xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                    <div>
-                        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i>
-                            <span data-i18n="sandbox_title">Interactive Scenario & Stress Sandbox</span>
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5" data-i18n="sandbox_subtitle">
-                            Simulate identical dry-bulb temperatures under contrasting humidity & radiation regimes.
-                        </p>
-                    </div>
-
-                    <!-- Preset Scenario Chips -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="loadScenario('scenario_a_dry_heat')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs rounded-lg font-semibold transition border border-amber-500/30 flex items-center space-x-1.5 shadow-sm">
-                            <span>🌵</span> <span data-i18n="scen_a_btn">Dry Heat (40°C, 20% RH)</span>
-                        </button>
-                        <button onclick="loadScenario('scenario_b_humid_heat')" class="px-2.5 py-1.5 bg-red-950/60 hover:bg-red-900/60 text-red-300 text-xs rounded-lg font-bold transition border border-red-500/40 flex items-center space-x-1.5 shadow-sm">
-                            <span>⚠️</span> <span data-i18n="scen_b_btn">Lethal Humid Heat (40°C, 70% RH)</span>
-                        </button>
-                        <button onclick="loadScenario('scenario_c_delhi_2024_heatwave')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-orange-300 text-xs rounded-lg font-semibold transition border border-orange-500/30 flex items-center space-x-1.5 shadow-sm">
-                            <span>🔥</span> <span data-i18n="scen_c_btn">Summer Spike (44.5°C)</span>
-                        </button>
-                        <button onclick="loadScenario('scenario_d_mild_conditions')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs rounded-lg font-semibold transition border border-emerald-500/30 flex items-center space-x-1.5 shadow-sm">
-                            <span>🌿</span> <span data-i18n="scen_d_btn">Mild Normal (30°C, 45% RH)</span>
-                        </button>
-                        <button onclick="fetchLiveForecast()" class="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs rounded-lg font-bold transition shadow-md flex items-center space-x-1.5">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                            <span data-i18n="live_forecast_btn">Live Forecast (D+1 to D+5)</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Environmental Sliders Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-1">
-                    
-                    <!-- Temp Slider -->
-                    <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                        <div class="flex justify-between text-xs text-slate-300 font-medium">
-                            <span data-i18n="slider_temp">Air Temp (2m):</span> 
-                            <span id="temp-val" class="font-black text-orange-400 font-mono">40.0 °C</span>
-                        </div>
-                        <input type="range" id="temp-slider" min="20" max="52" step="0.5" value="40" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-500" oninput="updateControls()">
-                        <div class="flex justify-between text-[10px] text-slate-500 font-mono"><span>20°C</span><span>52°C</span></div>
-                    </div>
-
-                    <!-- RH Slider -->
-                    <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                        <div class="flex justify-between text-xs text-slate-300 font-medium">
-                            <span data-i18n="slider_rh">Relative Humidity:</span> 
-                            <span id="rh-val" class="font-black text-cyan-400 font-mono">35.0 %</span>
-                        </div>
-                        <input type="range" id="rh-slider" min="5" max="95" step="1" value="35" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500" oninput="updateControls()">
-                        <div class="flex justify-between text-[10px] text-slate-500 font-mono"><span>5%</span><span>95%</span></div>
-                    </div>
-
-                    <!-- Wind Slider -->
-                    <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                        <div class="flex justify-between text-xs text-slate-300 font-medium">
-                            <span data-i18n="slider_wind">Wind Speed (10m):</span> 
-                            <span id="wind-val" class="font-black text-teal-400 font-mono">2.5 m/s</span>
-                        </div>
-                        <input type="range" id="wind-slider" min="0.2" max="15" step="0.1" value="2.5" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500" oninput="updateControls()">
-                        <div class="flex justify-between text-[10px] text-slate-500 font-mono"><span>0.2 m/s</span><span>15 m/s</span></div>
-                    </div>
-
-                    <!-- Radiation Slider -->
-                    <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                        <div class="flex justify-between text-xs text-slate-300 font-medium">
-                            <span data-i18n="slider_solar">Solar Radiation:</span> 
-                            <span id="solar-val" class="font-black text-amber-400 font-mono">650 W/m²</span>
-                        </div>
-                        <input type="range" id="solar-slider" min="0" max="1100" step="25" value="650" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500" oninput="updateControls()">
-                        <div class="flex justify-between text-[10px] text-slate-500 font-mono"><span>0 (Night)</span><span>1100 W/m²</span></div>
-                    </div>
-
-                    <!-- Duration Slider -->
-                    <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                        <div class="flex justify-between text-xs text-slate-300 font-medium">
-                            <span data-i18n="slider_days">Heatwave Days:</span> 
-                            <span id="days-val" class="font-black text-red-400 font-mono">1 Day</span>
-                        </div>
-                        <input type="range" id="days-slider" min="1" max="7" step="1" value="1" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-500" oninput="updateControls()">
-                        <div class="flex justify-between text-[10px] text-slate-500 font-mono"><span>1 Day</span><span>7+ Days (Extreme Dmult)</span></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 5 KEY BIOMETEOROLOGICAL INDICES CARDS -->
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                <!-- UTCI Card -->
-                <div class="glass-card rounded-2xl p-4 border border-slate-800 relative overflow-hidden group">
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-mono text-slate-400 font-bold">WMO / FIALA 187-NODE</span>
-                        <span id="utci-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-orange-500/20 text-orange-300 border border-orange-500/30">VERY STRONG</span>
-                    </div>
-                    <div class="mt-3 flex items-baseline justify-between">
-                        <div>
-                            <div class="text-3xl font-black font-mono tracking-tight text-white" id="utci-value">-- °C</div>
-                            <div class="text-xs font-bold text-slate-300 mt-0.5" data-i18n="utci_label">Universal Thermal Climate (UTCI)</div>
-                        </div>
-                        <i data-lucide="activity" class="w-7 h-7 text-orange-400/50"></i>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2.5 leading-tight" data-i18n="metric_utci_desc">
-                        Multi-node dynamic human thermoregulation strain model.
-                    </p>
-                </div>
-
-                <!-- ISO 7243 WBGT Card -->
-                <div class="glass-card rounded-2xl p-4 border border-slate-800 relative overflow-hidden group">
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-red-500/10 rounded-full blur-xl group-hover:bg-red-500/20 transition"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-mono text-slate-400 font-bold">ISO 7243 / NIOSH</span>
-                        <span id="wbgt-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">HIGH HAZARD</span>
-                    </div>
-                    <div class="mt-3 flex items-baseline justify-between">
-                        <div>
-                            <div class="text-3xl font-black font-mono tracking-tight text-white" id="wbgt-value">-- °C</div>
-                            <div class="text-xs font-bold text-slate-300 mt-0.5" data-i18n="wbgt_label">Wet-Bulb Globe Temp (WBGT)</div>
-                        </div>
-                        <i data-lucide="sun" class="w-7 h-7 text-red-400/50"></i>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2.5 leading-tight" data-i18n="metric_wbgt_desc">
-                        Occupational labor criteria & mandatory work-rest ratio.
-                    </p>
-                </div>
-
-                <!-- NOAA Heat Index Card -->
-                <div class="glass-card rounded-2xl p-4 border border-slate-800 relative overflow-hidden group">
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-mono text-slate-400 font-bold">NOAA / STEADMAN</span>
-                        <span id="hi-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">DANGER</span>
-                    </div>
-                    <div class="mt-3 flex items-baseline justify-between">
-                        <div>
-                            <div class="text-3xl font-black font-mono tracking-tight text-white" id="hi-value">-- °C</div>
-                            <div class="text-xs font-bold text-slate-300 mt-0.5" data-i18n="hi_label">NOAA Heat Index</div>
-                        </div>
-                        <i data-lucide="thermometer" class="w-7 h-7 text-amber-400/50"></i>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2.5 leading-tight" data-i18n="metric_hi_desc">
-                        Apparent temperature under shaded humidity condition.
-                    </p>
-                </div>
-
-                <!-- Composite Risk Score Card -->
-                <div class="glass-card rounded-2xl p-4 border border-slate-800 relative overflow-hidden group">
-                    <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/20 transition"></div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-mono text-slate-400 font-bold">HAZARD × HVI</span>
-                        <span id="risk-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">HIGH RISK</span>
-                    </div>
-                    <div class="mt-3 flex items-baseline justify-between">
-                        <div>
-                            <div class="text-3xl font-black font-mono tracking-tight text-white" id="risk-value">-- <span class="text-sm font-normal text-slate-400">/ 100</span></div>
-                            <div class="text-xs font-bold text-slate-300 mt-0.5" data-i18n="risk_label">Composite Ward Risk</div>
-                        </div>
-                        <i data-lucide="shield" class="w-7 h-7 text-cyan-400/50"></i>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2.5 leading-tight" data-i18n="metric_risk_desc">
-                        Hazard strain compounded by ward socio-demographics.
-                    </p>
-                </div>
-            </section>
-
-            <!-- MAIN WORKSPACE: GOD'S EYE 3D C2 WAR ROOM & WARD INSPECTOR -->
-            <section id="section-map" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                <!-- Left: Map & God's Eye C2 Engine (8 cols) -->
-                <div class="lg:col-span-8 glass-panel rounded-2xl p-5 border border-slate-800 shadow-2xl flex flex-col space-y-4">
-                    
-                    <!-- Map Toolbar & Mode Toggles -->
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                        <div>
-                            <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                                <i data-lucide="map" class="w-4 h-4 text-cyan-400"></i>
-                                <span data-i18n="map_title">Hyper-Local Ward Risk Attribution & God's Eye C2</span>
-                            </h3>
-                            <p class="text-xs text-slate-400 mt-0.5" data-i18n="map_subtitle">
-                                Click any ward polygon to inspect demographic vulnerability & automated civic triggers.
-                            </p>
-                        </div>
-                        <span id="map-active-city-badge" class="text-xs bg-slate-800 px-3 py-1 rounded-xl text-slate-200 border border-slate-700 font-bold font-mono">
-                            Delhi Pilot Wards (8 Wards)
-                        </span>
-                    </div>
-
-                    <!-- God's Eye Mode Selector Bar -->
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <button id="ge-mode-2d" onclick="setMapMode('2d')" class="ge-mode-btn active px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-700 bg-slate-800 text-slate-200 flex items-center space-x-1.5">
-                                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-                                <span>2D Wards</span>
-                            </button>
-                            <button id="ge-mode-3d" onclick="setMapMode('3d')" class="ge-mode-btn px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:text-white flex items-center space-x-1.5">
-                                <i data-lucide="box" class="w-3.5 h-3.5"></i>
-                                <span>GOD'S EYE 3D</span>
-                            </button>
-                            <button id="ge-mode-thermal" onclick="setMapMode('thermal')" class="ge-mode-btn px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:text-white flex items-center space-x-1.5">
-                                <i data-lucide="flame" class="w-3.5 h-3.5"></i>
-                                <span>FLIR / LST</span>
-                            </button>
-                            <button id="ge-mode-satellite" onclick="setMapMode('satellite')" class="ge-mode-btn px-3 py-1.5 rounded-lg text-xs font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:text-white flex items-center space-x-1.5">
-                                <i data-lucide="globe" class="w-3.5 h-3.5"></i>
-                                <span>SATELLITE</span>
-                            </button>
-                        </div>
-
-                        <!-- 3D Drone & Camera Control Toggles -->
-                        <div class="flex items-center gap-2">
-                            <button id="btn-all-india" onclick="toggleAllIndiaMacroView()" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition border border-cyan-800/80 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 flex items-center space-x-1">
-                                <i data-lucide="compass" class="w-3.5 h-3.5"></i>
-                                <span>All-India Radar</span>
-                            </button>
-                            <button id="btn-uav-patrol" onclick="toggleUAVPatrol()" class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition border border-red-800/80 bg-red-950/40 text-red-300 hover:bg-red-900/50 flex items-center space-x-1">
-                                <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
-                                <span id="btn-uav-text">UAV Patrol</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Map Containers -->
-                    <div class="relative w-full rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
-                        <!-- 2D Leaflet Container -->
-                        <div id="map" class="w-full"></div>
-
-                        <!-- 3D MapLibre God's Eye Container -->
-                        <div id="godsEyeMap" class="w-full"></div>
-
-                        <!-- Tactical HUD Telemetry Overlay -->
-                        <div id="ge-hud" class="absolute top-3 left-3 z-20 pointer-events-none hidden glass-panel border border-cyan-500/40 rounded-xl px-3.5 py-2.5 backdrop-blur-md">
-                            <div class="hud-glow text-[11px] text-cyan-300 leading-relaxed">
-                                <div class="font-extrabold flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                                    <span>◈ THERMOSHIELD C2 — GOD'S EYE</span>
-                                </div>
-                                <div id="hud-coords" class="font-mono">LAT 28.6139 / LON 77.2090</div>
-                                <div id="hud-attitude" class="font-mono">PITCH 55° / BRG -20° / ALT 12.4 km</div>
-                                <div id="hud-style" class="font-mono">SENSOR: 3D EXTRUDED HEAT PILLARS</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Map Legend & Attribution -->
-                    <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
-                        <span class="font-bold text-slate-300" data-i18n="legend_title">Risk Legend:</span>
-                        <div class="flex items-center flex-wrap gap-3 font-mono">
-                            <span class="flex items-center"><span class="w-3 h-3 rounded-md bg-emerald-500 mr-1.5 shadow-sm"></span> <span data-i18n="legend_low">Low (&lt;30)</span></span>
-                            <span class="flex items-center"><span class="w-3 h-3 rounded-md bg-yellow-500 mr-1.5 shadow-sm"></span> <span data-i18n="legend_mod">Moderate (30–60)</span></span>
-                            <span class="flex items-center"><span class="w-3 h-3 rounded-md bg-orange-500 mr-1.5 shadow-sm"></span> <span data-i18n="legend_high">High (60–75)</span></span>
-                            <span class="flex items-center"><span class="w-3 h-3 rounded-md bg-red-600 mr-1.5 shadow-sm"></span> <span data-i18n="legend_very_high">Very High (75–85)</span></span>
-                            <span class="flex items-center"><span class="w-3 h-3 rounded-md bg-red-950 border border-red-500 mr-1.5 shadow-sm"></span> <span data-i18n="legend_critical">Critical (&gt;85)</span></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Ward Vulnerability & Civic Trigger Inspector (4 cols) -->
-                <div class="lg:col-span-4 glass-panel rounded-2xl p-5 border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
-                    <div class="space-y-4">
-                        
-                        <!-- Ward Header -->
-                        <div class="border-b border-slate-800/80 pb-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider" data-i18n="inspector_tag">WARD INSPECTOR</span>
-                                <span id="inspector-risk-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">CRITICAL</span>
-                            </div>
-                            <h4 id="inspector-ward-name" class="text-lg font-black text-white mt-1">Ward A (Slum Hub)</h4>
-                            <p id="inspector-ward-type" class="text-xs text-slate-400 font-medium">High-density informal settlement, tin roofing, low canopy</p>
-                        </div>
-
-                        <!-- Key Ward Metrics Grid -->
-                        <div class="grid grid-cols-2 gap-2.5 text-xs">
-                            <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
-                                <div class="text-[10px] text-slate-400 font-mono" data-i18n="hvi_label">Vulnerability Index (HVI)</div>
-                                <div class="text-base font-bold text-orange-400 font-mono mt-0.5" id="inspector-hvi">0.82 <span class="text-[10px] text-slate-500 font-normal">/ 1.0</span></div>
-                            </div>
-                            <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
-                                <div class="text-[10px] text-slate-400 font-mono" data-i18n="pop_label">Population</div>
-                                <div class="text-base font-bold text-white font-mono mt-0.5" id="inspector-pop">85,000</div>
-                            </div>
-                            <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
-                                <div class="text-[10px] text-slate-400 font-mono" data-i18n="slum_label">Slum Ratio</div>
-                                <div class="text-base font-bold text-red-400 font-mono mt-0.5" id="inspector-slum">68 %</div>
-                            </div>
-                            <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
-                                <div class="text-[10px] text-slate-400 font-mono" data-i18n="tree_label">Canopy Deficit</div>
-                                <div class="text-base font-bold text-amber-400 font-mono mt-0.5" id="inspector-canopy">91 %</div>
-                            </div>
-                        </div>
-
-                        <!-- Automated Civic Interventions -->
-                        <div class="space-y-2">
-                            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
-                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                <span data-i18n="triggers_title">Automated Action Directives</span>
-                            </div>
-                            <ul id="inspector-actions" class="text-xs text-slate-300 space-y-2">
-                                <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
-                                    <span class="text-red-400 mt-0.5">●</span>
-                                    <span>Deploy 4 emergency water tankers to central market chowk.</span>
-                                </li>
-                                <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
-                                    <span class="text-orange-400 mt-0.5">●</span>
-                                    <span>Activate Community Hall cooling shelter with misting fans.</span>
-                                </li>
-                                <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-start space-x-2">
-                                    <span class="text-amber-400 mt-0.5">●</span>
-                                    <span>Mandatory labor cessation (11 AM–4 PM) at Metro Line 4 construction.</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Ward Dispatch Action Button -->
-                    <button onclick="dispatchWardAlert()" class="w-full py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-red-900/30 flex items-center justify-center space-x-2">
-                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                        <span>Dispatch Ward Advisory (SMS / WhatsApp)</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- 5-DAY PREDICTIVE FORECAST & EPIDEMIOLOGICAL TREND ENGINE -->
-            <section id="section-forecast" class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4 shadow-xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                    <div>
-                        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i>
-                            <span data-i18n="forecast_title">5-Day Multi-Index Predictive Lead-Time Curves</span>
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5" data-i18n="forecast_subtitle">
-                            Hourly NWP projections (0.1° grid) demonstrating the critical gap between ambient temperature and human strain.
-                        </p>
-                    </div>
+            <!-- 1. HERO ALERT CARD -->
+            <section id="section-hero" class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div class="space-y-2">
                     <div class="flex items-center space-x-2">
-                        <span class="text-[10px] bg-cyan-950/80 text-cyan-300 px-2.5 py-1 rounded-lg font-mono border border-cyan-500/30">
-                            NWP 5-Day Horizon
-                        </span>
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide" id="hero-city-name">Delhi NCR</span>
+                        <span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold" id="hero-alert-level">Extreme Heat Risk</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight" data-i18n="hero_title">
+                        Extreme heat risk is rising
+                    </h2>
+                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed" data-i18n="hero_desc">
+                        Shows how weather conditions affect people. High humidity and direct sun prevent natural cooling, making conditions dangerous for outdoor activities.
+                    </p>
+                    <div class="pt-2">
+                        <a href="#section-safety" class="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-sm">
+                            <span data-i18n="hero_cta">View Safety Advice</span>
+                            <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+                        </a>
                     </div>
                 </div>
 
-                <div class="w-full h-80 pt-2">
-                    <canvas id="forecastChart"></canvas>
+                <!-- Primary Metric Callout -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 shrink-0 text-center w-full lg:w-56 shadow-inner">
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide" data-i18n="heat_stress_label">Heat Stress Index</div>
+                    <div class="text-4xl font-extrabold text-red-600 my-1 tracking-tight" id="hero-utci-display">53.1 °C</div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700" id="hero-utci-badge">Dangerous</span>
                 </div>
             </section>
 
-            <!-- OCCUPATIONAL HEALTH & NIOSH WORK-REST TIMER -->
-            <section id="section-occupational" class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4 shadow-xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-                    <div>
-                        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <i data-lucide="timer" class="w-4 h-4 text-orange-400"></i>
-                            <span data-i18n="occupational_title">ISO 7243 & NIOSH Occupational Work-Rest Schedule</span>
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5" data-i18n="occupational_subtitle">
-                            Automated work-rest ratios and active countdown clock for gig workers (Swiggy/Zomato) & construction labor.
-                        </p>
+            <!-- 2. 4 KEY WEATHER & HEAT METRICS -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Air Temperature -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-1">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                        <span data-i18n="metric_temp">Air Temperature</span>
+                        <i data-lucide="thermometer" class="w-4 h-4 text-orange-500"></i>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span id="occ-ratio-badge" class="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">
-                            25% Work / 75% Rest
-                        </span>
+                    <div class="text-2xl font-bold text-slate-900" id="metric-temp-val">40.0 °C</div>
+                    <div class="text-xs text-slate-500" data-i18n="metric_temp_sub">Measured at 2 metres</div>
+                </div>
+
+                <!-- Humidity -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-1">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                        <span data-i18n="metric_humidity">Relative Humidity</span>
+                        <i data-lucide="droplets" class="w-4 h-4 text-blue-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900" id="metric-rh-val">76 %</div>
+                    <div class="text-xs text-slate-500" data-i18n="metric_humidity_sub">High Moisture</div>
+                </div>
+
+                <!-- Wind Speed -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-1">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                        <span data-i18n="metric_wind">Wind Speed</span>
+                        <i data-lucide="wind" class="w-4 h-4 text-teal-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900" id="metric-wind-val">2.5 m/s</div>
+                    <div class="text-xs text-slate-500" data-i18n="metric_wind_sub">Light Breeze (9 km/h)</div>
+                </div>
+
+                <!-- Solar Radiation / Overall Risk -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-1">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+                        <span data-i18n="metric_risk">Overall Risk</span>
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-red-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-red-600" id="metric-risk-val">70.9 / 100</div>
+                    <div class="text-xs text-slate-500" data-i18n="metric_risk_sub">High in crowded areas</div>
+                </div>
+            </section>
+
+            <!-- 3. INTERACTIVE SCENARIOS (TRY DIFFERENT CONDITIONS) -->
+            <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide" data-i18n="try_heat_title">Try Different Heat Conditions</h3>
+                        <p class="text-xs text-slate-500" data-i18n="try_heat_sub">See how changes in humidity and temperature change human heat stress.</p>
+                    </div>
+                    
+                    <!-- Presets -->
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button onclick="loadScenario('scenario_a_dry_heat')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition">
+                            Dry Heat (40°C, 20% RH)
+                        </button>
+                        <button onclick="loadScenario('scenario_b_humid_heat')" class="px-2.5 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold transition border border-red-200">
+                            Humid Heat (40°C, 70% RH)
+                        </button>
+                        <button onclick="loadScenario('scenario_c_delhi_2024_heatwave')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition">
+                            Summer Spike (44.5°C)
+                        </button>
+                        <button onclick="loadScenario('scenario_d_mild_conditions')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition">
+                            Mild (30°C, 45% RH)
+                        </button>
+                        <button onclick="fetchLiveForecast()" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition flex items-center space-x-1">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            <span>Live Forecast</span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
-                    <!-- Controls & Parameters (7 cols) -->
-                    <div class="lg:col-span-7 space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Sliders Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <div class="flex justify-between text-slate-700 font-medium mb-1">
+                            <span>Air Temperature:</span>
+                            <span id="temp-val" class="font-bold text-slate-900">40.0 °C</span>
+                        </div>
+                        <input type="range" id="temp-slider" min="20" max="52" step="0.5" value="40" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateControls()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-700 font-medium mb-1">
+                            <span>Relative Humidity:</span>
+                            <span id="rh-val" class="font-bold text-slate-900">76.0 %</span>
+                        </div>
+                        <input type="range" id="rh-slider" min="5" max="95" step="1" value="76" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateControls()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-700 font-medium mb-1">
+                            <span>Wind Speed:</span>
+                            <span id="wind-val" class="font-bold text-slate-900">2.5 m/s</span>
+                        </div>
+                        <input type="range" id="wind-slider" min="0.2" max="15" step="0.1" value="2.5" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateControls()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-700 font-medium mb-1">
+                            <span>Solar Radiation:</span>
+                            <span id="solar-val" class="font-bold text-slate-900">650 W/m²</span>
+                        </div>
+                        <input type="range" id="solar-slider" min="0" max="1100" step="25" value="650" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateControls()">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. MIDDLE ROW: HEAT RISK MAP & 5-DAY FORECAST -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left: Heat Risk Map (6 cols) -->
+                <div id="section-map" class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900" data-i18n="map_title">Heat Risk Map</h3>
+                                <p class="text-xs text-slate-500" data-i18n="map_sub">Click any area to inspect risk details and recommended actions.</p>
+                            </div>
                             
-                            <!-- Workload Intensity -->
-                            <div class="space-y-1.5">
-                                <label class="text-xs text-slate-300 font-semibold" data-i18n="occ_workload">Workload Intensity:</label>
-                                <select id="occ-workload-select" onchange="onOccupationalChange()" class="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium">
-                                    <option value="light">Light (Office / Driving / Inspection)</option>
-                                    <option value="moderate" selected>Moderate (Gig Delivery / Walking)</option>
-                                    <option value="heavy">Heavy (Construction / Bricklaying / Trenching)</option>
-                                </select>
-                            </div>
-
-                            <!-- Sector Preset -->
-                            <div class="space-y-1.5">
-                                <label class="text-xs text-slate-300 font-semibold" data-i18n="occ_sector">Target Labor Sector:</label>
-                                <select id="occ-sector-select" onchange="onOccupationalChange()" class="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium">
-                                    <option value="gig_delivery" selected>Gig Delivery (Swiggy / Zomato / Blinkit)</option>
-                                    <option value="construction">Construction & Real Estate</option>
-                                    <option value="agriculture">Agriculture & Outdoor Labor</option>
-                                    <option value="sanitation">Municipal Sanitation & Sweepers</option>
-                                </select>
+                            <!-- 2D / 3D Mode Switcher -->
+                            <div class="flex items-center bg-slate-100 rounded-lg p-0.5 text-xs font-semibold">
+                                <button id="ge-mode-2d" onclick="setMapMode('2d')" class="ge-mode-btn active px-2.5 py-1 rounded text-slate-700">2D Map</button>
+                                <button id="ge-mode-3d" onclick="setMapMode('3d')" class="ge-mode-btn px-2.5 py-1 rounded text-slate-600 hover:text-slate-900">God's Eye 3D</button>
                             </div>
                         </div>
 
-                        <!-- Specific Directive Card -->
-                        <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-2">
-                            <div class="text-xs font-bold text-orange-400 font-mono uppercase" id="occ-directive-title">MANDATORY NIOSH ADVISORY</div>
-                            <p class="text-xs text-slate-300 leading-relaxed" id="occ-directive-text">
-                                Due to WBGT exceeding 32.0°C, outdoor delivery workers must take a mandatory 45-minute shade rest for every 15 minutes of riding. Free electrolyte packets to be distributed at hubs.
-                            </p>
+                        <!-- Map Container -->
+                        <div class="relative w-full rounded-lg overflow-hidden border border-slate-200">
+                            <div id="map"></div>
+                            <div id="godsEyeMap"></div>
                         </div>
                     </div>
 
-                    <!-- Live Work-Rest Active Timer (5 cols) -->
-                    <div class="lg:col-span-5 bg-gradient-to-br from-slate-950 to-slate-900 p-5 rounded-2xl border border-slate-800 shadow-inner flex flex-col justify-between items-center text-center">
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400" id="occ-timer-phase-label">CURRENT CYCLE: WORK INTERVAL</span>
-                            <div class="text-4xl sm:text-5xl font-black font-mono text-cyan-400 tracking-tight my-1" id="occ-timer-display">15:00</div>
-                            <p class="text-[11px] text-slate-400" id="occ-timer-desc">15 min work cycle before mandatory 45 min shade break</p>
+                    <!-- Map Legend -->
+                    <div class="flex items-center justify-between text-xs text-slate-600 pt-2 border-t border-slate-100">
+                        <span class="font-semibold text-slate-700">Risk Level:</span>
+                        <div class="flex items-center space-x-3">
+                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span> Low</span>
+                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500 mr-1.5"></span> Moderate</span>
+                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 mr-1.5"></span> High</span>
+                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-red-600 mr-1.5"></span> Extreme</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: 5-Day Forecast Chart (6 cols) -->
+                <div id="section-forecast" class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900" data-i18n="forecast_title">5-Day Forecast</h3>
+                                <p class="text-xs text-slate-500" data-i18n="forecast_sub">Comparing human heat stress against measured temperature.</p>
+                            </div>
+                            <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">Hourly Prediction</span>
                         </div>
 
-                        <div class="flex items-center gap-3 w-full mt-4">
-                            <button onclick="toggleTimer()" id="btn-timer-toggle" class="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center space-x-1.5">
-                                <i data-lucide="play" class="w-3.5 h-3.5"></i>
-                                <span id="btn-timer-text">Start Cycle Clock</span>
-                            </button>
-                            <button onclick="resetTimer()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition border border-slate-700">
-                                Reset
-                            </button>
+                        <!-- Chart Container -->
+                        <div class="w-full h-[340px] pt-1">
+                            <canvas id="forecastChart"></canvas>
                         </div>
+                    </div>
+
+                    <!-- Plain Language Takeaway -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-center space-x-2">
+                        <i data-lucide="info" class="w-4 h-4 text-amber-700 shrink-0"></i>
+                        <span class="font-medium" data-i18n="forecast_takeaway">
+                            Heat risk is expected to stay high for the next 5 days. High humidity will keep sweat cooling low during peak hours.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. PEOPLE MOST AT RISK -->
+            <section id="section-vulnerable" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900" data-i18n="vulnerable_title">People Most at Risk</h3>
+                    <p class="text-xs text-slate-500" data-i18n="vulnerable_sub">Groups that face the highest danger during extreme heat conditions.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Outdoor Workers -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                                <i data-lucide="truck" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">High Risk</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">Outdoor & Delivery Workers</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Continuous sun exposure and physical effort without shaded rest increases heatstroke danger.
+                        </p>
+                    </div>
+
+                    <!-- Elderly People -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">High Risk</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">Elderly People (60+)</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Body temperature regulation is slower; higher likelihood of heart strain and dehydration.
+                        </p>
+                    </div>
+
+                    <!-- Young Children -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                                <i data-lucide="baby" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">High Risk</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">Young Children (&lt;5)</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Children absorb heat faster than adults and dehydrate quickly during outdoor playtime.
+                        </p>
+                    </div>
+
+                    <!-- Dense Areas / Slums -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                                <i data-lucide="home" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">High Risk</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-900">Dense Areas & Slums</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Tin roofs and lack of tree cover trap heat indoors, keeping nighttime temperatures high.
+                        </p>
                     </div>
                 </div>
             </section>
 
-            <!-- HINDCAST VALIDATION TIME-MACHINE -->
-            <section id="section-hindcast" class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4 shadow-xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+            <!-- 6. THREE SIMPLE ADVISORY SECTIONS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- General Public -->
+                <div id="section-safety" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-2 text-blue-700 pb-1 border-b border-slate-100">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        <h3 class="text-xs font-bold uppercase tracking-wide text-slate-900" data-i18n="safety_title">Stay Safe in Extreme Heat</h3>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-600 font-bold">•</span>
+                            <span><strong>Drink water regularly:</strong> Have water or ORS every 30 minutes, even if you do not feel thirsty.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-600 font-bold">•</span>
+                            <span><strong>Stay indoors:</strong> Avoid direct sun between 11:00 AM and 4:00 PM when heat stress peaks.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-600 font-bold">•</span>
+                            <span><strong>Wear light clothing:</strong> Use loose, light-colored cotton clothes and head covering outdoors.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-blue-600 font-bold">•</span>
+                            <span><strong>Seek medical help:</strong> If you or someone nearby feels dizzy, confused, or unusually weak, move to shade and call 108.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Outdoor Workers -->
+                <div id="section-workers" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-2 text-orange-600 pb-1 border-b border-slate-100">
+                        <i data-lucide="hard-hat" class="w-4 h-4"></i>
+                        <h3 class="text-xs font-bold uppercase tracking-wide text-slate-900" data-i18n="workers_title">For Outdoor & Delivery Workers</h3>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-600 font-bold">•</span>
+                            <span><strong>Take regular cooling breaks:</strong> Rest for 15–20 minutes in shade after deliveries.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-600 font-bold">•</span>
+                            <span><strong>Carry hydration:</strong> Carry at least 2 litres of water with oral rehydration salts (ORS).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-600 font-bold">•</span>
+                            <span><strong>Avoid peak afternoon heat:</strong> Reschedule heavy loading or high-speed deliveries where possible.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-orange-600 font-bold">•</span>
+                            <span><strong>Check alerts daily:</strong> Check the heat warning status on this dashboard before starting shifts.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Local Authorities -->
+                <div id="section-authorities" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-2 text-emerald-600 pb-1 border-b border-slate-100">
+                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                        <h3 class="text-xs font-bold uppercase tracking-wide text-slate-900" data-i18n="authorities_title">For Local Authorities</h3>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">•</span>
+                            <span><strong>Limit heavy outdoor work:</strong> Implement mandatory afternoon pauses for construction and road works.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">•</span>
+                            <span><strong>Open cooling centres:</strong> Open public community halls, libraries, and shaded bus stops.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">•</span>
+                            <span><strong>Set up water stations:</strong> Dispatch water tankers to high-density informal settlement wards.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">•</span>
+                            <span><strong>Alert hospitals:</strong> Ready dedicated cooling beds and IV hydration supplies in emergency rooms.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 7. PAST HEATWAVE CHECK (HINDCAST) -->
+            <section id="section-hindcast" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
                     <div>
-                        <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                            <i data-lucide="history" class="w-4 h-4 text-cyan-400"></i>
-                            <span data-i18n="hindcast_title">Hindcast Validation & Epidemiological Time-Machine</span>
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5" data-i18n="hindcast_subtitle">
-                            Validating early physiological warning elevation 72h–120h before peak mortality surge (Azhar et al. 2014, Mazdiyasni et al. 2017).
-                        </p>
+                        <h3 class="text-sm font-bold text-slate-900" data-i18n="hindcast_title">Past Heatwave Check</h3>
+                        <p class="text-xs text-slate-500" data-i18n="hindcast_sub">Demonstrating how early warnings give 3 to 5 days lead time before heat peaks.</p>
                     </div>
 
-                    <!-- Event Dropdown -->
                     <div class="flex items-center space-x-2">
-                        <span class="text-xs text-slate-400 font-semibold" data-i18n="hindcast_event_label">Event:</span>
-                        <select id="hindcast-event-selector" onchange="onHindcastEventChange(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium">
+                        <label for="hindcast-event-selector" class="text-xs text-slate-500 font-medium">Event:</label>
+                        <select id="hindcast-event-selector" onchange="onHindcastEventChange(this.value)" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none cursor-pointer font-medium">
                             <option value="delhi_june_2024">Delhi Severe Heatwave (June 2024)</option>
-                            <option value="ahmedabad_may_2010">Ahmedabad Landmark Heatwave (May 2010 - 1,344 Excess Deaths)</option>
-                            <option value="delhi_may_2022">Delhi Early-Onset Heatwave (May 2022)</option>
+                            <option value="ahmedabad_may_2010">Ahmedabad Heatwave (May 2010)</option>
+                            <option value="delhi_may_2022">Delhi Heatwave (May 2022)</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Timeline Scrubber & Player Controls -->
-                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
+                <!-- Timeline Scrubber -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center space-x-2">
-                            <button id="hindcast-prev-btn" onclick="stepHindcast(-1)" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition border border-slate-700">
+                            <button onclick="stepHindcast(-1)" class="p-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 shadow-sm text-xs font-bold">
                                 <i data-lucide="chevron-left" class="w-4 h-4"></i>
                             </button>
-                            <button id="hindcast-play-btn" onclick="toggleHindcastPlay()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition shadow flex items-center space-x-1.5">
+                            <button onclick="toggleHindcastPlay()" id="hindcast-play-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold shadow-sm flex items-center space-x-1">
                                 <i data-lucide="play" class="w-3.5 h-3.5"></i>
-                                <span id="hindcast-play-text">Replay Simulation</span>
+                                <span id="hindcast-play-text">Replay Timeline</span>
                             </button>
-                            <button id="hindcast-next-btn" onclick="stepHindcast(1)" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition border border-slate-700">
+                            <button onclick="stepHindcast(1)" class="p-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 shadow-sm text-xs font-bold">
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </button>
-                            <button id="hindcast-reset-btn" onclick="resetHindcast()" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-xl text-xs font-semibold transition border border-slate-800">
-                                Reset D-5
+                            <button onclick="resetHindcast()" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded text-xs font-medium border border-slate-200">
+                                Reset
                             </button>
                         </div>
 
-                        <!-- Current Step Badge -->
-                        <div class="text-right">
-                            <span id="hindcast-step-badge" class="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                D-5 (120h Lead)
-                            </span>
-                        </div>
+                        <span id="hindcast-step-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                            D-5 (120h Lead Time)
+                        </span>
                     </div>
 
-                    <!-- Scrubber Slider -->
-                    <div class="space-y-1 pt-1">
-                        <input type="range" id="hindcast-slider" min="0" max="4" step="1" value="0" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500" oninput="onHindcastSliderChange(this.value)">
-                        <div class="flex justify-between text-[11px] text-slate-400 font-mono px-1">
-                            <span>D-5 (120h Lead)</span>
-                            <span>D-4 (96h Lead)</span>
-                            <span>D-3 (72h Lead)</span>
-                            <span>D-2 (48h Lead)</span>
-                            <span>D-Day (Peak Surge)</span>
-                        </div>
+                    <input type="range" id="hindcast-slider" min="0" max="4" step="1" value="0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="onHindcastSliderChange(this.value)">
+                    <div class="flex justify-between text-[11px] text-slate-500 px-1">
+                        <span>D-5 (Early Warning)</span>
+                        <span>D-4</span>
+                        <span>D-3 (Targeted Aid)</span>
+                        <span>D-2</span>
+                        <span>D-Day (Peak Heat)</span>
                     </div>
                 </div>
 
-                <!-- Hindcast Metric Comparison Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
-                        <div class="text-[10px] text-slate-400 font-mono">CONVENTIONAL FORECAST (T2M)</div>
-                        <div class="text-xl font-bold text-amber-400 font-mono" id="hc-conv-val">40.2 °C</div>
-                        <p class="text-[11px] text-slate-400" id="hc-conv-desc">Yellow watch only; fails to trigger emergency municipal actions.</p>
+                <!-- Comparison Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-1">
+                        <div class="text-slate-500 font-semibold uppercase text-[10px]">Normal Forecast (Air Temp)</div>
+                        <div class="text-base font-bold text-slate-900" id="hc-conv-val">40.2 °C</div>
+                        <p class="text-slate-600 text-[11px]">Showed only standard watch; missed high moisture danger.</p>
                     </div>
 
-                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
-                        <div class="text-[10px] text-slate-400 font-mono">THERMOSHIELD UTCI / WBGT</div>
-                        <div class="text-xl font-bold text-red-400 font-mono" id="hc-utci-val">48.6 °C UTCI</div>
-                        <p class="text-[11px] text-slate-400" id="hc-utci-desc">Stage-4 Red alert issued 120 hours prior due to humidity lock.</p>
+                    <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-1">
+                        <div class="text-slate-500 font-semibold uppercase text-[10px]">ORION Heat Stress Index</div>
+                        <div class="text-base font-bold text-red-600" id="hc-utci-val">48.6 °C</div>
+                        <p class="text-slate-600 text-[11px]">Elevated to Red Alert 5 days in advance.</p>
                     </div>
 
-                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-1">
-                        <div class="text-[10px] text-slate-400 font-mono">AVERTED MORTALITY SURGE</div>
-                        <div class="text-xl font-bold text-emerald-400 font-mono" id="hc-mortality-val">Pre-positioned Care</div>
-                        <p class="text-[11px] text-slate-400" id="hc-mortality-desc">Hospitals equipped with cooling baths & IV fluids 72h ahead.</p>
+                    <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-1">
+                        <div class="text-slate-500 font-semibold uppercase text-[10px]">Action Taken</div>
+                        <div class="text-base font-bold text-emerald-600" id="hc-mortality-val">Pre-positioned Aid</div>
+                        <p class="text-slate-600 text-[11px]">Water tankers and cooling centers deployed before casualties occurred.</p>
                     </div>
                 </div>
             </section>
 
-            <!-- BILINGUAL & MULTI-STAKEHOLDER ACTION ADVISORY SUITE -->
-            <section id="section-advisories" class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4 shadow-xl">
-                <div class="border-b border-slate-800/80 pb-3">
-                    <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
-                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-                        <span data-i18n="advisories_title">Multi-Sector Action Protocols & Safety Guidelines</span>
-                    </h3>
-                    <p class="text-xs text-slate-400 mt-0.5" data-i18n="advisories_subtitle">
-                        Automated sector-specific instructions generated according to NDMA and National Heat Action Plan standards.
-                    </p>
+            <!-- 8. DATA SOURCES (TRANSPARENT PROVENANCE) -->
+            <section id="section-sources" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="text-sm font-bold text-slate-900" data-i18n="sources_title">Data Sources</h3>
+                    <p class="text-xs text-slate-500" data-i18n="sources_sub">Built entirely on open, scientific, and reproducible public data feeds.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    
-                    <!-- Vulnerable Citizens -->
-                    <div class="glass-card p-4 rounded-xl border border-slate-800 space-y-2">
-                        <div class="flex items-center space-x-2 text-cyan-400">
-                            <i data-lucide="users" class="w-4 h-4"></i>
-                            <h4 class="text-xs font-bold text-white uppercase">Vulnerable Citizens</h4>
-                        </div>
-                        <ul class="text-[11px] text-slate-300 space-y-1.5" id="adv-citizens">
-                            <li>• Elderly and infants stay indoors in ventilated or cool areas between 11 AM and 4 PM.</li>
-                            <li>• Drink ORS, buttermilk, and lemon water every 30 minutes even if not thirsty.</li>
-                            <li>• Use cool sponge baths if ambient indoor temp exceeds 35°C.</li>
-                        </ul>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="font-bold text-slate-900">Open-Meteo NWP</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">5-day hourly numerical weather predictions (0.1° grid resolution)</div>
                     </div>
-
-                    <!-- Gig & Outdoor Labor -->
-                    <div class="glass-card p-4 rounded-xl border border-slate-800 space-y-2">
-                        <div class="flex items-center space-x-2 text-orange-400">
-                            <i data-lucide="truck" class="w-4 h-4"></i>
-                            <h4 class="text-xs font-bold text-white uppercase">Gig & Outdoor Labor</h4>
-                        </div>
-                        <ul class="text-[11px] text-slate-300 space-y-1.5" id="adv-labor">
-                            <li>• Mandatory 45-min rest in shaded misting hubs for every 15 min active delivery.</li>
-                            <li>• Construction work halted from 11:00 AM to 4:00 PM under NIOSH directives.</li>
-                            <li>• Wear light-colored, loose cotton clothing and wide-brim helmets.</li>
-                        </ul>
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="font-bold text-slate-900">NASA POWER</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">40-year historical climatological baseline & solar irradiance</div>
                     </div>
-
-                    <!-- Municipal & Urban Bodies -->
-                    <div class="glass-card p-4 rounded-xl border border-slate-800 space-y-2">
-                        <div class="flex items-center space-x-2 text-emerald-400">
-                            <i data-lucide="landmark" class="w-4 h-4"></i>
-                            <h4 class="text-xs font-bold text-white uppercase">Municipal Corporations</h4>
-                        </div>
-                        <ul class="text-[11px] text-slate-300 space-y-1.5" id="adv-municipal">
-                            <li>• Deploy 8 water tankers to informal settlement chowks across Ward A and D.</li>
-                            <li>• Open public libraries and AC community centers as designated cooling shelters.</li>
-                            <li>• Spray recycled mist on primary transit corridors to curb surface heat islands.</li>
-                        </ul>
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="font-bold text-slate-900">Census of India</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">Ward-level population, elderly ratio, and outdoor worker density</div>
                     </div>
-
-                    <!-- Hospitals & Health Dept -->
-                    <div class="glass-card p-4 rounded-xl border border-slate-800 space-y-2">
-                        <div class="flex items-center space-x-2 text-red-400">
-                            <i data-lucide="cross" class="w-4 h-4"></i>
-                            <h4 class="text-xs font-bold text-white uppercase">Hospitals & Triage</h4>
-                        </div>
-                        <ul class="text-[11px] text-slate-300 space-y-1.5" id="adv-health">
-                            <li>• Preposition 20 dedicated ice immersion cooling tubs and 500L IV saline fluids.</li>
-                            <li>• Activate emergency heatstroke triage protocol in casualty wards.</li>
-                            <li>• Track daily heat-related illness (HRI) reporting on the MoHFW portal.</li>
-                        </ul>
+                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div class="font-bold text-slate-900">WMO & ISO 7243</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">Fiala human thermal polynomial and NIOSH labor work-rest standards</div>
                     </div>
                 </div>
             </section>
 
             <!-- FOOTER -->
-            <footer class="border-t border-slate-800/80 pt-6 pb-8 text-center text-xs text-slate-500 space-y-2">
-                <div class="flex flex-wrap items-center justify-center gap-4 text-slate-400 font-medium">
-                    <span>Ministry of Earth Sciences (MoES)</span>
-                    <span>•</span>
-                    <span>NCMRWF</span>
-                    <span>•</span>
-                    <span>NDMA Guidelines 2024</span>
-                    <span>•</span>
-                    <span>WMO Universal Thermal Climate Index</span>
+            <footer class="border-t border-slate-200 pt-6 pb-8 text-center text-xs text-slate-500 space-y-1">
+                <div class="font-semibold text-slate-700">
+                    ORION — SIH26083 Extreme Heatwave Early Warning & Thermal Stress System
                 </div>
-                <p class="text-[11px] text-slate-500 font-mono">
-                    Project ID: SIH26083 | Open-Meteo & NASA POWER Operational Pipeline | Containerized Linux VPS Architecture
-                </p>
+                <div>
+                    National Centre for Medium Range Weather Forecasting (NCMRWF) • Ministry of Earth Sciences (MoES)
+                </div>
+                <div class="text-[11px] text-slate-400 pt-2">
+                    Open Source • Containerized Python & Linux VPS Architecture • Verified on Real Data
+                </div>
             </footer>
         </main>
     </div>
 
-    <!-- MAIN APP JAVASCRIPT CONTROLLER -->
-    <script src="app.js?v=6"></script>
+    <!-- MAIN JAVASCRIPT CONTROLLER -->
+    <script src="app.js?v=7"></script>
     <script>
-        // Initialize Lucide Icons
         lucide.createIcons();
-
-        // Audio Briefing Simulation using SpeechSynthesis
-        function playAudioBriefing() {
-            if ('speechSynthesis' in window) {
-                const text = `Situational Alert for ${state.city}. Universal Thermal Climate Index is currently ${state.thermalIndices.utci} degrees Celsius, indicating very strong heat stress. High-risk informal settlement wards are placed on Red Alert. Mandatory work-rest ratios are active for outdoor labor.`;
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = state.language === 'hi' ? 'hi-IN' : 'en-US';
-                utterance.rate = 1.0;
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert("Audio synthesis is not supported on this browser.");
-            }
-        }
-
-        // Simulate Emergency Broadcast Notification
-        function simulateEmergencyBroadcast() {
-            alert(`🚨 EMERGENCY BROADCAST SIMULATION:\n\nTriggering automated Stage-4 Red Alert notification to NDMA, Delhi Disaster Management Authority, and 12,000 registered gig delivery workers across Ward A.\n\nWater tanker routes dispatched.`);
-        }
-
-        function dispatchWardAlert() {
-            alert(`📲 WARD ADVISORY DISPATCHED:\n\nTarget: ${state.activeWardData ? state.activeWardData.name : 'Ward A'}\nChannel: Bilingual SMS / WhatsApp Gateway\nStatus: 200 OK — Delivery queued for 85,000 residents.`);
-        }
     </script>
 </body>
 </html>

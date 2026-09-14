@@ -40,7 +40,7 @@ def build_official_filled_sih_deck():
     HEX_GRAPHIC_PATH = "/tmp/sih_hex_graphic.png"
     DIAGRAM_S2_PATH = "/tmp/sih_assets/slide2_flowchart.png"
     GODS_EYE_SCREENSHOT = "/home/ubuntu/sih26083-heat-risk/docs/assets/gods-eye-c2.png"
-    DIAGRAM_S3_PATH = GODS_EYE_SCREENSHOT if os.path.exists(GODS_EYE_SCREENSHOT) else "/tmp/sih_assets/slide3_gis_curves.png"
+    DIAGRAM_S3_PATH = "/tmp/sih_assets/slide3_technical_approach_reference.png"
     DIAGRAM_S5_PATH = "/tmp/sih_assets/slide5_timeline.png"
 
     def set_white_bg(slide):
@@ -327,49 +327,12 @@ def build_official_filled_sih_deck():
     p_m.font.color.rgb = NAVY_PRIMARY
     p_m.font.name = "Arial"
 
-    # Left: Process Pipeline Steps (Card)
-    card_steps = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.4), Inches(5.6), Inches(3.5))
-    card_steps.fill.solid()
-    card_steps.fill.fore_color.rgb = BG_WHITE
-    card_steps.line.color.rgb = BORDER_BLUE
-    card_steps.line.width = Pt(1.5)
-
-    tf_cs = card_steps.text_frame
-    tf_cs.word_wrap = True
-    tf_cs.margin_left = tf_cs.margin_top = tf_cs.margin_right = tf_cs.margin_bottom = Inches(0)
-
-    p = tf_cs.paragraphs[0]
-    p.text = "4-STAGE COMPUTATIONAL PIPELINE"
-    p.font.size = Pt(10)
-    p.font.bold = True
-    p.font.color.rgb = NAVY_PRIMARY
-    p.alignment = PP_ALIGN.CENTER
-
-    steps_data = [
-        ("1. Ingestion:", "Open-Meteo 0.1° NWP 5-day hourly weather + NASA POWER 40-yr baseline + Census 2011 PCA demographics."),
-        ("2. Thermal Engine:", "UTCI 6th-order polynomial (Fiala) + ISO 7243 WBGT psychrometrics + Multi-day persistence penalty (Dmult)."),
-        ("3. AI & HVI Synthesis:", "PCA Demographic Vulnerability Index (slums, elderly, gig labor, canopy deficit) → 0–100 Heat-Health Score."),
-        ("4. God's Eye C2 & Action:", "Tactical 3D Command View (MapLibre), 25 REST APIs, NDMA playbooks, hospital cooling beds, NIOSH labor halts.")
-    ]
-    for s_head, s_body in steps_data:
-        p_s = tf_cs.add_paragraph()
-        p_s.text = f"• {s_head} "
-        p_s.font.size = Pt(8.5)
-        p_s.font.bold = True
-        p_s.font.color.rgb = NAVY_PRIMARY
-        p_s.space_before = Pt(3)
-
-        run_sb = p_s.add_run()
-        run_sb.text = s_body
-        run_sb.font.bold = False
-        run_sb.font.color.rgb = TEXT_DARK
-
-    # Right: Working Prototype Diagram (Choropleth + Curves)
+    # Embedded Reference Flowchart Architecture Image across full top width
     if os.path.exists(DIAGRAM_S3_PATH):
-        s3.shapes.add_picture(DIAGRAM_S3_PATH, Inches(6.6), Inches(1.4), width=Inches(5.933), height=Inches(3.5))
+        s3.shapes.add_picture(DIAGRAM_S3_PATH, Inches(0.8), Inches(1.35), width=Inches(11.733), height=Inches(3.6))
 
     # Section 2: Technologies to be used (Bottom Categorized Container)
-    tech_box = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(5.05), Inches(11.733), Inches(1.85))
+    tech_box = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(5.1), Inches(11.733), Inches(1.8))
     tech_box.fill.solid()
     tech_box.fill.fore_color.rgb = BG_LIGHT_GREY
     tech_box.line.color.rgb = BORDER_GREY
@@ -378,16 +341,15 @@ def build_official_filled_sih_deck():
     tf_tb.word_wrap = True
 
     p = tf_tb.paragraphs[0]
-    p.text = "• Technologies to be used (Programming Languages, Frameworks, GIS & Deployment):"
+    p.text = "• Technologies to be used (Programming Languages, Frameworks, GIS & Deployment Platforms):"
     p.font.size = Pt(10.5)
     p.font.bold = True
     p.font.color.rgb = NAVY_PRIMARY
 
     tech_categories = [
-        ("Backend & REST APIs:", "Python 3.11, FastAPI, Pydantic v2, Uvicorn, AsyncIO (25 REST production endpoints)"),
-        ("Biometeorology & GIS Engine:", "NumPy, Pandas, GeoPandas, Shapely, Scipy (UTCI 6th-order polynomial & ISO 7243 psychrometrics)"),
-        ("Web GIS & Tactical 3D C2:", "MapLibre GL JS (God's Eye 3D C2 War Room), Leaflet.js (2D Choropleth), Chart.js (5-Day Trend Curves)"),
-        ("Data Ingestion & Deployment:", "Open-Meteo NWP, NASA POWER MERRA-2, Census India PCA, Docker, Linux VPS (Oracle Linux)")
+        ("Programming Languages & Web:", "Python 3.11, JavaScript (ES6+), HTML5, Tailwind CSS, AsyncIO (FastAPI 25 REST Endpoints)"),
+        ("AI / ML & Biometeorology Frameworks:", "NumPy, Pandas, GeoPandas, Shapely, Scipy, Fiala 187-Node UTCI Polynomial, ISO 7243 WBGT"),
+        ("Cloud, GIS & Deployment Platforms:", "Docker, Docker Compose, Linux VPS (Oracle Cloud), Nginx (SSL/TLS), GitHub CI/CD, MapLibre GL, Leaflet")
     ]
 
     for cat, desc in tech_categories:
